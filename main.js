@@ -81,7 +81,7 @@ class ConsciousnessEngine {
         vx: (Math.random() - 0.5) * 0.4,
         vy: (Math.random() - 0.5) * 0.4,
         radius: Math.random() * 2 + 1,
-        color: Math.random() > 0.5 ? 'rgba(100, 255, 218, 0.4)' : 'rgba(168, 85, 247, 0.35)',
+        color: Math.random() > 0.5 ? 'rgba(14, 116, 144, 0.45)' : 'rgba(124, 58, 237, 0.4)',
         alpha: Math.random() * 0.6 + 0.2,
         life: 1,
         decay: 0
@@ -93,9 +93,9 @@ class ConsciousnessEngine {
     const speed = burst ? 2.5 : 1.2;
     const angle = Math.random() * Math.PI * 2;
     const colors = [
-      'rgba(100, 255, 218, 0.8)', // Cyan
-      'rgba(168, 85, 247, 0.8)', // Purple
-      'rgba(244, 63, 94, 0.7)'   // Rose
+      'rgba(12, 74, 110, 0.85)',  // Deep blue
+      'rgba(124, 58, 237, 0.8)',  // Purple
+      'rgba(190, 18, 60, 0.75)'   // Rose
     ];
 
     this.particles.push({
@@ -138,9 +138,13 @@ class ConsciousnessEngine {
   }
 
   render() {
-    // Subtle trail persistence
-    this.ctx.fillStyle = 'rgba(11, 12, 16, 0.25)';
+    // Subtle trail persistence. Erases a little alpha from the previous frame
+    // rather than painting dark over it, so the Vanta clouds behind the canvas
+    // stay visible instead of being buried after a few frames.
+    this.ctx.globalCompositeOperation = 'destination-out';
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
     this.ctx.fillRect(0, 0, this.width, this.height);
+    this.ctx.globalCompositeOperation = 'source-over';
 
     // Draw particle connections / neural web
     for (let i = 0; i < this.particles.length; i++) {
@@ -150,8 +154,10 @@ class ConsciousnessEngine {
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist < 120) {
-          const alpha = (1 - dist / 120) * 0.15 * Math.min(this.particles[i].alpha, this.particles[j].alpha);
-          this.ctx.strokeStyle = `rgba(100, 255, 218, ${alpha})`;
+          // Higher multiplier than the dark theme used — thin lines need more
+          // alpha to stay visible against a bright sky.
+          const alpha = (1 - dist / 120) * 0.3 * Math.min(this.particles[i].alpha, this.particles[j].alpha);
+          this.ctx.strokeStyle = `rgba(12, 74, 110, ${alpha})`;
           this.ctx.lineWidth = 1;
           this.ctx.beginPath();
           this.ctx.moveTo(this.particles[i].x, this.particles[i].y);
@@ -179,7 +185,37 @@ class ConsciousnessEngine {
   }
 }
 
+/**
+ * Vanta CLOUDS background (github.com/tengbao/vanta, MIT).
+ * Daytime sky using Vanta's stock colors. The rest of the app palette in
+ * style.css is tuned to sit on top of this rather than a dark background.
+ */
+function initCloudBackground() {
+  if (typeof VANTA === 'undefined' || !VANTA.CLOUDS) {
+    console.warn('[Shared Minds] Vanta unavailable — running without cloud background.');
+    return null;
+  }
+
+  return VANTA.CLOUDS({
+    el: '#vanta-bg',
+    mouseControls: true,
+    touchControls: true,
+    gyroControls: false,
+
+    backgroundColor: 0xffffff,
+    skyColor: 0x68b8d7,
+    cloudColor: 0xadc1de,
+    cloudShadowColor: 0x183550,
+    sunColor: 0xff9919,
+    sunGlareColor: 0xff6633,
+    sunlightColor: 0xff9933,
+
+    speed: 0.7 // slow drift suits a stream of consciousness
+  });
+}
+
 // Initialize when DOM is ready
 window.addEventListener('DOMContentLoaded', () => {
+  window.vantaEffect = initCloudBackground();
   window.engine = new ConsciousnessEngine('consciousness-canvas');
 });

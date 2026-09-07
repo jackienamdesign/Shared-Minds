@@ -1,12 +1,13 @@
 :root {
-  --bg-color: #0b0c10;
-  --text-primary: #e0e6ed;
-  --text-secondary: #8892b0;
-  --accent-cyan: #64ffda;
-  --accent-purple: #a855f7;
-  --accent-pink: #f43f5e;
-  --glass-bg: rgba(15, 23, 42, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  /* Daytime palette — dark ink on a bright sky. */
+  --bg-color: #cfe3f0; /* fallback shown only before Vanta paints */
+  --text-primary: #0f172a;
+  --text-secondary: #33506b;
+  --accent-cyan: #0e7490;
+  --accent-purple: #7c3aed;
+  --accent-pink: #be123c;
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(15, 23, 42, 0.12);
   --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'Space Grotesk', monospace;
 }
@@ -33,6 +34,18 @@ html, body {
   height: 100vh;
 }
 
+/* Vanta clouds sit behind everything. Vanta tracks the mouse on window,
+   so pointer-events can stay off without losing the parallax drift. */
+#vanta-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
 #consciousness-canvas {
   position: absolute;
   top: 0;
@@ -41,6 +54,33 @@ html, body {
   height: 100%;
   display: block;
   z-index: 1;
+}
+
+/* Liquid glass thought field — sits above the canvas, centered */
+#glass-field-root {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+}
+
+.thought-input {
+  width: min(70vw, 420px);
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-main);
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  caret-color: var(--accent-purple);
+  user-select: text;
+}
+
+.thought-input::placeholder {
+  color: rgba(15, 23, 42, 0.55);
+  font-weight: 300;
 }
 
 /* Glassmorphism HUD Overlay */
@@ -86,7 +126,7 @@ h1 {
   font-size: 1.35rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #ffffff 0%, var(--accent-cyan) 100%);
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-cyan) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -120,13 +160,13 @@ h1 {
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.14);
 }
 
 .key-hint {
-  background: rgba(100, 255, 218, 0.12);
+  background: rgba(14, 116, 144, 0.1);
   color: var(--accent-cyan);
-  border: 1px solid rgba(100, 255, 218, 0.25);
+  border: 1px solid rgba(14, 116, 144, 0.28);
   padding: 2px 8px;
   border-radius: 6px;
   font-family: var(--font-mono);
