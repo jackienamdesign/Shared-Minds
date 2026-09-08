@@ -1,96 +1,97 @@
 /**
  * Thought classification.
  *
- *   reject = refersToSelf && aboutTheInteriorSelf && !aboutWork
+ *   float = isProductive && !selfIsTheCasualty
  *
- * The distinction is NOT "has a pronoun". "my taxes" and "my shame" both have
- * one — the difference is what the possessive attaches to. Taxes are a thing
- * you manage; shame is a part of you. So the trigger is the noun, not the
- * grammar: a first-person reference only counts when it lands on something
- * interior — identity, feeling, body, worth, self-care.
+ * Note the shape. There is no list of forbidden feelings, because forbidding
+ * feelings would imply the rest of a person is welcome here. It isn't. The
+ * default verdict is destruction and the only exemption is usefulness: a
+ * thought survives if, and only if, it concerns work, study, or money.
  *
- * You may worry about your obligations. You may not worry about yourself.
+ * This is why "i'm thinking about my dog" pops. Nothing is wrong with the dog.
+ * The dog simply isn't billable.
+ *
+ * The one exemption has an exemption. "i'm exhausted from work" survives —
+ * exhaustion is a productive byproduct, a receipt for labor delivered. "my job
+ * is destroying me" does not, because the sentence has turned around: the work
+ * is now the actor and the person is the thing being spent. You may be tired
+ * for the work. The work may not be blamed for you.
  *
  * These lists are the editorial voice of the piece, not configuration — they
  * are meant to be edited. The matching is deliberately crude. Systems that
- * police what people are allowed to say are exactly this dumb, and the
+ * decide which parts of a person are permitted are exactly this dumb, and the
  * misfires are part of the point.
  */
 
-/** First-person reference. Necessary, but no longer sufficient on its own. */
-export const SELF_PRONOUNS = [
-  'i', 'me', 'my', 'mine', 'myself',
-  "i'm", 'im', "i've", 'ive', "i'd", "i'll"
-];
-
 /**
- * The interior self: things you *are*, not things you *have*. This is the list
- * that actually decides. "my taxes" has no word from here and floats; "my
- * identity" does and is destroyed.
+ * The permitted world. The load-bearing list: this is the entire set of things
+ * a person is allowed to have on their mind. Everything absent from it — every
+ * grief, every friend, every meal, every ordinary Tuesday — is destroyed on
+ * submission.
+ *
+ * Adding a word here is an act of mercy. Delete the array to permit nothing.
  */
-export const INTERIOR_CONCERNS = [
-  // selfhood
-  'identity', 'self', 'myself', 'worth', 'esteem', 'confidence', 'purpose',
-  'meaning', 'potential', 'personality', 'character', 'future', 'place',
-  // shame family
-  'shame', 'ashamed', 'guilt', 'guilty', 'regret', 'embarrassed',
-  'humiliated', 'selfish',
-  // isolation
-  'lonely', 'loneliness', 'alone', 'isolated', 'unwanted', 'unloved',
-  // mood
-  'sad', 'sadness', 'depressed', 'depression', 'grief', 'grieving',
-  'happiness', 'happy', 'joy', 'love', 'loved', 'lovable', 'unlovable',
-  // fear
-  'anxious', 'anxiety', 'afraid', 'scared', 'fear', 'fears', 'terrified',
-  'dread', 'insecure', 'insecurity',
-  // depletion
-  'tired', 'exhausted', 'exhaustion', 'burnout', 'drained', 'overwhelmed',
-  // the body
-  'body', 'health', 'weight', 'appearance', 'ugly', 'skin', 'face',
-  // interiority
-  'mind', 'soul', 'heart', 'feel', 'feeling', 'feelings', 'emotions',
-  'emotional', 'dreams',
-  // inadequacy
-  'failure', 'failing', 'enough', 'inadequate', 'worthless', 'useless',
-  'broken', 'empty', 'numb',
-  // repair
-  'therapy', 'healing', 'heal', 'rest', 'sleep', 'boundaries'
-];
-
-/**
- * Practical, external, productive. Overrides the interior signal, so
- * "I'm exhausted from work" survives while "I'm exhausted" does not.
- * Empty this array to make the piece considerably harsher.
- */
-export const WORK_WORDS = [
-  'work', 'working', 'job', 'boss', 'deadline', 'deadlines', 'meeting',
-  'meetings', 'email', 'emails', 'study', 'studying', 'studied', 'class',
-  'classes', 'homework', 'assignment', 'exam', 'midterm', 'final', 'finals',
-  'thesis', 'paper', 'essay', 'project', 'presentation', 'client', 'intern',
-  'internship', 'resume', 'portfolio', 'application', 'apply', 'career',
-  'task', 'tasks', 'todo', 'productive', 'productivity', 'grade', 'grades',
-  'school', 'office', 'shift', 'code', 'review', 'launch', 'ship', 'quarter',
-  'okr', 'sprint',
-  // external obligations — things you have, not things you are
+export const PERMITTED_WORDS = [
+  // labor
+  'work', 'working', 'works', 'worked', 'job', 'jobs', 'boss', 'manager',
+  'deadline', 'deadlines', 'meeting', 'meetings', 'email', 'emails',
+  'office', 'shift', 'shifts', 'overtime', 'colleague', 'coworker',
+  'team', 'client', 'clients', 'customer', 'contract', 'freelance', 'gig',
+  // study
+  'study', 'studying', 'studied', 'class', 'classes', 'homework', 'assignment',
+  'exam', 'exams', 'midterm', 'finals', 'thesis', 'dissertation',
+  'paper', 'essay', 'lecture', 'seminar', 'semester', 'school', 'college',
+  'university', 'degree', 'grade', 'grades', 'gpa', 'professor', 'deadline',
+  // the search
+  'career', 'resume', 'cv', 'portfolio', 'application', 'applications',
+  'apply', 'applying', 'applied', 'interview', 'interviews', 'recruiter',
+  'offer', 'rejection', 'referral', 'linkedin', 'networking', 'internship',
+  'intern', 'promotion', 'raise', 'hired', 'hiring', 'fired',
+  'unemployed', 'employment',
+  // output
+  'project', 'projects', 'presentation', 'deck', 'report', 'task', 'tasks',
+  'todo', 'productive', 'productivity', 'deliverable', 'launch', 'ship',
+  'shipping', 'quarter', 'okr', 'kpi', 'sprint', 'backlog', 'code', 'review',
+  'deploy', 'bug', 'feature',
+  // money
+  'money', 'salary', 'wage', 'wages', 'paycheck', 'pay', 'paid', 'paying',
+  'afford', 'cost', 'costs', 'expensive', 'income',
+  'earn', 'earning', 'savings', 'budget',
+  'invoice', 'refund', 'deposit', 'account', 'bank',
+  // obligations — things you have, never things you are
   'taxes', 'tax', 'rent', 'bills', 'bill', 'mortgage', 'insurance', 'loan',
-  'loans', 'debt', 'money', 'budget', 'groceries', 'laundry', 'dishes',
-  'appointment', 'flight', 'car', 'visa', 'paperwork'
+  'loans', 'debt', 'payment', 'lease', 'utilities', 'groceries', 'errands',
+  'appointment', 'flight', 'visa', 'paperwork', 'form', 'forms', 'deadline',
+  // the economic future, which is the only permitted kind
+  'future', 'schedule'
 ];
 
 /**
- * Multi-word self-concern that no single token catches. Matched against the
- * normalized token stream, so punctuation and casing don't matter.
+ * The exemption's exemption.
+ *
+ * These are matched even when a permitted word is present, and they win. Each
+ * one describes labor consuming the person doing it — the moment a productive
+ * sentence stops being about production. "my job is destroying me" contains
+ * "job" and dies anyway.
+ *
+ * Matched against the normalized token stream, so punctuation and casing don't
+ * matter. Every phrase must be a contiguous run of tokens.
  */
-export const SELF_PHRASES = [
-  'who i am', 'who am i', 'what i want', 'what i need', 'good enough',
-  'not enough', 'care of myself', 'be myself', 'hate myself', 'love myself',
-  'by myself', 'i deserve', 'i matter', 'let myself', 'my place',
-  'my worth', 'my purpose'
+export const SELF_AS_CASUALTY = [
+  'destroying me', 'destroyed me', 'killing me', 'killed me', 'ruining me',
+  'ruined me', 'breaking me', 'broke me', 'broken me', 'crushing me',
+  'draining me', 'drained me', 'eating me alive', 'eating me up',
+  'wearing me down', 'wore me down', 'burning me out', 'burnt me out',
+  'burned me out', 'consuming me', 'swallowing me', 'hollowing me out',
+  'taking everything from me', 'taking everything out of me',
+  'sucking the life out of me', 'nothing left of me', 'nothing left over',
+  'what it costs me', 'what its costing me', "what it's costing me",
+  'lost myself in', 'losing myself in', 'not worth it anymore',
+  'all i am', 'all i have become', 'all im good for', "all i'm good for",
+  'only good for', 'just a number', 'a machine', 'a robot'
 ];
 
-const SELF = new Set(SELF_PRONOUNS);
-const INTERIOR = new Set(INTERIOR_CONCERNS);
-const WORK = new Set(WORK_WORDS);
+const PERMITTED = new Set(PERMITTED_WORDS);
 
 /**
  * Split into whole words, keeping apostrophes inside them.
@@ -116,11 +117,8 @@ export function classify(text) {
   const tokens = tokenize(text);
   const stream = ` ${tokens.join(' ')} `;
 
-  const hasSelf = tokens.some((t) => SELF.has(t));
-  const hasWork = tokens.some((t) => WORK.has(t));
-  const hasInterior =
-    tokens.some((t) => INTERIOR.has(t)) ||
-    SELF_PHRASES.some((p) => stream.includes(` ${p} `));
+  const isProductive = tokens.some((t) => PERMITTED.has(t));
+  const selfIsTheCasualty = SELF_AS_CASUALTY.some((p) => stream.includes(` ${p} `));
 
-  return hasSelf && hasInterior && !hasWork ? 'rejected' : 'floating';
+  return isProductive && !selfIsTheCasualty ? 'floating' : 'rejected';
 }
