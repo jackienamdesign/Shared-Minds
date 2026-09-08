@@ -1,15 +1,10 @@
 :root {
-  /* Daytime palette — dark ink on a bright sky. */
-  --bg-color: #cfe3f0; /* fallback shown only before Vanta paints */
+  --bg-color: #cfe3f0;
+  /* fallback shown only before Vanta paints */
   --text-primary: #0f172a;
-  --text-secondary: #33506b;
-  --accent-cyan: #0e7490;
-  --accent-purple: #7c3aed;
-  --accent-pink: #be123c;
-  --glass-bg: rgba(255, 255, 255, 0.55);
-  --glass-border: rgba(15, 23, 42, 0.12);
-  --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'Space Grotesk', monospace;
+  --text-muted: rgba(15, 23, 42, 0.55);
+  --accent: #7c3aed;
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 * {
@@ -19,7 +14,8 @@
   user-select: none;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -46,23 +42,100 @@ html, body {
   pointer-events: none;
 }
 
-#consciousness-canvas {
-  position: absolute;
+/* --- floating thoughts ---------------------------------------------------- */
+
+/* Below the field, so bubbles emerge from behind its top edge. */
+.bubble-layer {
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  display: block;
-  z-index: 1;
+  z-index: 15;
+  pointer-events: none;
+  overflow: hidden;
 }
 
-/* Liquid glass thought field — sits above the canvas, centered */
-#glass-field-root {
+.bubble-anchor {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+/* Cheap glass. liquid-glass-react is reserved for the field — running its
+   SVG displacement filters on 40 of these would collapse the frame rate. */
+.bubble-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 220px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.14));
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px) saturate(150%);
+  -webkit-backdrop-filter: blur(8px) saturate(150%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.75),
+    inset 0 -8px 14px rgba(255, 255, 255, 0.18),
+    0 4px 14px rgba(15, 23, 42, 0.05);
+  will-change: transform, opacity;
+  transition: box-shadow 25ms linear;
+}
+
+/* Surface tension releasing, on the first frames of the pop. */
+.bubble-body.is-flashing {
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 1),
+    0 0 18px rgba(255, 255, 255, 0.9),
+    0 4px 14px rgba(15, 23, 42, 0.1);
+  border-color: rgba(255, 255, 255, 0.95);
+}
+
+.bubble-text {
+  font-size: 0.9rem;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--text-primary);
+  text-align: center;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.bubble-drop {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+  will-change: transform, opacity;
+}
+
+/* --- the field ------------------------------------------------------------ */
+
+/* liquid-glass-react positions itself: it always emits top/left:50% plus a
+   translate(-50%, -50%) and expects position:fixed to be passed in via its
+   style prop (see glass-field.js). So this is just a passive full-screen layer
+   — any centering applied here fights the library and pulls the field off
+   centre. Do not add flex/grid centering.
+   Deliberately no transform on this element either: an ancestor transform
+   would make the field's position:fixed resolve against it instead of the
+   viewport, breaking the centering. */
+#glass-field-root {
+  position: fixed;
+  inset: 0;
   z-index: 20;
+  pointer-events: none;
+}
+
+/* The field's drop shadow. liquid-glass-react hardcodes this inline on its
+   .glass div, and with overLight:true it picks the heavier of its two options —
+   0px 16px 70px rgba(0, 0, 0, 0.75). The style prop is not spread onto that
+   element, so !important is the only way to reach it. Without this rule the
+   field goes back to the library's 75% black.
+   The last number is the dial: lower = fainter. */
+.glass {
+  box-shadow: 0 10px 34px rgba(15, 23, 42, 0.05) !important;
 }
 
 .thought-input {
@@ -74,102 +147,44 @@ html, body {
   font-size: 1.05rem;
   font-weight: 400;
   color: var(--text-primary);
-  caret-color: var(--accent-purple);
+  caret-color: var(--accent);
   user-select: text;
+  pointer-events: auto;
+  /* the root layer is click-through */
 }
 
 .thought-input::placeholder {
-  color: rgba(15, 23, 42, 0.55);
+  color: var(--text-muted);
   font-weight: 300;
 }
 
-/* Glassmorphism HUD Overlay */
-.hud-header {
-  position: absolute;
-  top: 24px;
-  left: 28px;
-  z-index: 10;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent-cyan);
-  box-shadow: 0 0 12px var(--accent-cyan);
-  animation: pulse 2.5s infinite ease-in-out;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(0.9);
-    opacity: 0.7;
-  }
-  50% {
-    transform: scale(1.3);
-    opacity: 1;
-    box-shadow: 0 0 18px var(--accent-cyan);
-  }
-}
-
-h1 {
-  font-size: 1.35rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-cyan) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.subtitle {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.hud-footer {
-  position: absolute;
-  bottom: 24px;
+/* Fixed, not absolute: the field is fixed-positioned by the library, so there
+   is no laid-out box to hang this beneath. Offset from the viewport centre by
+   roughly half the field's height plus a gap. */
+.field-error {
+  position: fixed;
+  top: calc(50% + 50px);
   left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
+  transform: translateX(-50%) translateY(4px);
+  width: max-content;
+  max-width: 90vw;
+  font-size: 0.82rem;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+  text-align: center;
+  opacity: 0;
   pointer-events: none;
+  transition: opacity 260ms ease, transform 260ms ease;
 }
 
-.pill {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  padding: 8px 16px;
-  border-radius: 9999px;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.14);
+.field-error.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
-.key-hint {
-  background: rgba(14, 116, 144, 0.1);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(14, 116, 144, 0.28);
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 600;
+@media (prefers-reduced-motion: reduce) {
+  .field-error {
+    transition: opacity 200ms ease;
+  }
 }
