@@ -15,7 +15,8 @@ import { createRoot } from 'react-dom/client';
 import LiquidGlass from 'liquid-glass-react';
 
 import { classify } from './classify.js';
-import { spawnThought } from './bubbles.js';
+import { judge } from './judge.js';
+import { spawnThought, resolveThought } from './bubbles.js';
 
 const h = React.createElement;
 
@@ -47,15 +48,30 @@ function ThoughtField() {
     const text = value.trim();
     if (!text) return;
 
-    const verdict = classify(text);
-
     // Measured from the input, not a wrapper: the glass is fixed-positioned by
     // the library, so its wrapper has no laid-out box. GLASS_PAD_Y backs the
     // measurement out to the pill's actual top edge.
     const rect = inputRef.current.getBoundingClientRect();
     const origin = { x: rect.left + rect.width / 2, y: rect.top - GLASS_PAD_Y };
 
-    spawnThought(text, verdict, origin, verdict === 'rejected' ? handlePop : undefined);
+    // Released before it is judged. The field clears immediately and the thought
+    // rises either way — waiting 3–8s on the network with a frozen input would
+    // read as lag, where floating-then-destroyed reads as review. onPop is
+    // attached unconditionally now, because at this point nobody knows yet.
+    const handle = spawnThought(text, origin, handlePop);
+
+    // The lexicon is the fallback, not the first opinion: it only decides when
+    // the judge can't be reached or answers with something unreadable.
+    judge(text).then((result) => {
+      const verdict = result ? result.verdict : classify(text);
+      // The tag is why, in one word from the rubric's closed set. Logged rather
+      // than shown: the person at the field is told nothing, which is the
+      // point. It is here so you can calibrate — see calibrate.mjs.
+      console.debug(
+        `[Shared Minds] ${verdict} · ${result ? result.tag : 'lexicon'} · ${JSON.stringify(text)}`
+      );
+      resolveThought(handle, verdict);
+    });
 
     setValue('');
     setShowError(false);

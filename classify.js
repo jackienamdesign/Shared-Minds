@@ -1,7 +1,12 @@
 /**
- * Thought classification.
+ * Thought classification — the fallback.
  *
  *   float = isProductive && !selfIsTheCasualty
+ *
+ * judge.js decides now. This runs only when the judge is unreachable or
+ * unreadable, which makes it the more honest of the two: the rule is right
+ * here, in a list you can read, rather than in a paragraph handed to a model
+ * over a network. Nothing below has changed. It has only been demoted.
  *
  * Note the shape. There is no list of forbidden feelings, because forbidding
  * feelings would imply the rest of a person is welcome here. It isn't. The

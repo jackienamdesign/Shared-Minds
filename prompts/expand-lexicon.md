@@ -16,6 +16,12 @@ anything are:
 
 Run it repeatedly with a different `FOCUS` line.
 
+**Still worth doing.** `judge.js` now makes the live verdict and `classify.js`
+only rules when the network is down — but that is exactly when the lists have to
+hold up on their own, and `RUBRIC` in `judge.js` is written to say the same
+thing in prose. The two judges should agree. Widening one without the other is
+how they drift.
+
 ---
 
 You are helping build the word lists for an interactive art piece called *Shared

@@ -1,6 +1,11 @@
 /**
  * Thought bubbles — emergence, drift, and destruction.
  *
+ * A bubble is born 'pending'. It leaves the field, wobbles, and drifts like any
+ * other thought while the judge in judge.js is still reading it, and only then
+ * learns whether it was allowed. Provisional permission: nothing here is safe,
+ * it has just not been reviewed yet.
+ *
  * Deliberately kept outside React. These animate every frame at up to 40
  * instances; re-rendering a component tree at 60fps to move them would be
  * wasteful. React owns the field, this module owns everything that floats.
@@ -16,6 +21,8 @@ const NECK = 180;    // pinches at the base — the tension moment
 const DETACH = 120;  // snaps free with an upward recoil
 const WOBBLE = 500;  // damped oscillation, settling
 const HOLD = 500;    // rejected only: hangs and drifts, long enough to read
+                     // — counted both from entering drift and from the verdict,
+                     //   so a late condemnation still gets its beat
 const POP = 70;      // rejected only: sudden and total
 
 const MAX_BUBBLES = 40;
@@ -61,12 +68,12 @@ function wobbleAt(t) {
 
 // --- construction -----------------------------------------------------------
 
-function createBubble(text, verdict, origin) {
+function createBubble(text, origin) {
   const anchor = document.createElement('div');
   anchor.className = 'bubble-anchor';
 
   const body = document.createElement('div');
-  body.className = 'bubble-body';
+  body.className = 'bubble-body is-pending';
 
   const label = document.createElement('span');
   label.className = 'bubble-text';
@@ -81,7 +88,10 @@ function createBubble(text, verdict, origin) {
   return {
     anchor,
     body,
-    verdict,
+    verdict: 'pending',
+    // Set when the verdict comes back 'rejected'. Null means either still under
+    // review or cleared — in both cases the bubble is left alone.
+    popAt: null,
     stage: 'swell',
     elapsed: 0,
     w: rect.width,
@@ -152,11 +162,14 @@ function advance(b, dt, now) {
       break;
     }
 
-    // 5. Drift — physics owns it now.
+    // 5. Drift — physics owns it now, until the verdict lands.
     case 'drift': {
       integrate(b);
       drawBubble(b, 1, 1, 1);
-      if (b.verdict === 'rejected' && b.elapsed >= HOLD) {
+      // Both clocks must have run out: HOLD since the bubble settled, so an
+      // early verdict can't cut the emergence short, and HOLD since the verdict
+      // itself, so a late one doesn't pop the instant it arrives.
+      if (b.popAt !== null && b.elapsed >= HOLD && now >= b.popAt) {
         pop(b, now);
       }
       break;
@@ -337,17 +350,47 @@ function start() {
 // --- public -----------------------------------------------------------------
 
 /**
+ * Release a thought into the sky, unjudged. It floats indefinitely until
+ * resolveThought() says otherwise.
+ *
  * @param {string} text     the thought
- * @param {'floating'|'rejected'} verdict
  * @param {{x:number,y:number}} origin  the field's top edge, in viewport coords
  * @param {() => void} [onPop]  fired at the instant of the pop, not at submit
+ * @returns {object} an opaque handle to pass to resolveThought
  */
-export function spawnThought(text, verdict, origin, onPop) {
-  const b = createBubble(text, verdict, origin);
+export function spawnThought(text, origin, onPop) {
+  const b = createBubble(text, origin);
   b.onPop = onPop;
   bubbles.push(b);
   evictOldest();
   start();
+  return b;
+}
+
+/**
+ * Deliver the verdict to a thought that is already in the air.
+ *
+ * Safe to call on a bubble that has since been evicted or popped, and safe to
+ * call twice — the first rejection stands, so a verdict can't be walked back
+ * once the pop is scheduled.
+ *
+ * @param {object} handle  the return value of spawnThought
+ * @param {'floating'|'rejected'} verdict
+ */
+export function resolveThought(handle, verdict) {
+  if (!handle || handle.dead || handle.stage === 'popping') return;
+  if (handle.verdict !== 'pending') return;
+
+  handle.verdict = verdict;
+  handle.body.classList.remove('is-pending');
+
+  if (verdict === 'rejected') {
+    handle.popAt = performance.now() + HOLD;
+    // Belt and braces. The loop only idles once every bubble is gone, and a
+    // gone bubble was filtered out above — but a verdict that lands on a live
+    // bubble must never be the one thing nothing is running to act on.
+    start();
+  }
 }
 
 // Everything layered above the bubbles is pointer-events:none, so these fire

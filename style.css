@@ -84,6 +84,33 @@ body {
   transition: box-shadow 25ms linear;
 }
 
+/* Still under review — the seconds between leaving the field and the judge in
+   judge.js answering. Almost nothing: a slow breath in the rim, enough that a
+   second look reads it as unsettled, not enough to announce itself. Only the
+   border and highlight move, so this stays on the paint path and survives 40
+   bubbles doing it at once. */
+.bubble-body.is-pending {
+  animation: bubble-pending 2600ms ease-in-out infinite;
+}
+
+@keyframes bubble-pending {
+  0%,
+  100% {
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.75),
+      inset 0 -8px 14px rgba(255, 255, 255, 0.18),
+      0 4px 14px rgba(15, 23, 42, 0.05);
+  }
+  50% {
+    border-color: rgba(255, 255, 255, 0.78);
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.95),
+      inset 0 -8px 14px rgba(255, 255, 255, 0.3),
+      0 4px 16px rgba(15, 23, 42, 0.07);
+  }
+}
+
 /* Surface tension releasing, on the first frames of the pop. */
 .bubble-body.is-flashing {
   box-shadow:
@@ -186,5 +213,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .field-error {
     transition: opacity 200ms ease;
+  }
+
+  /* bubbles.js already drops the wobble here; drop the pending breath too. */
+  .bubble-body.is-pending {
+    animation: none;
   }
 }
