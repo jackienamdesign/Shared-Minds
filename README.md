@@ -6,7 +6,7 @@ assignment, with a landing page at the root that lets you pick between them.
 | | Piece | Lives in | URL |
 |---|---|---|---|
 | Weeks 01–02 | Stream of Consciousness | `public/week1/` | `/week1/` |
-| Week 03 | Interactive Photobooth | `src/Photobooth.tsx` | `/#/photobooth` |
+| Week 03 | Interactive Photobooth | `src/week3/` + `public/week3/` | `/#/photobooth` |
 
 Live at **https://jackienamdesign.github.io/Shared-Minds/**
 
@@ -34,7 +34,9 @@ rather than forced into one pipeline:
   byte-for-byte, so the import map and CDN `<script>` tags keep resolving at
   runtime exactly as they always did. It is never bundled.
 - **Week 3 and the landing page are the Vite app** at the repo root, sharing one
-  React bundle.
+  React bundle. Week 3's own files are kept together: its React source and CSS
+  in `src/week3/`, its images in `public/week3/assets/`. Only `src/main.tsx`,
+  `src/Landing.tsx` and `src/index.css` are site-wide.
 - **Routing is hash-based** (`#/photobooth`). GitHub Pages serves static files
   with no rewrite rules, so a real path like `/week3` would 404 on refresh.
   Week 1 is not a route — it is a genuine page load out of the app.
@@ -128,6 +130,22 @@ harness is not published with the site.
 Newest first. One `###` block per working session — date, a short name for what
 it was about, then what changed in plain terms. Keep "still open" notes at the
 bottom of an entry; they are the fastest way back in next time.
+
+### 2026-09-22 — week 3 gathered into its own folder
+
+Week 3's files were spread across `src/` and `public/assets/`, which only works
+while there are two pieces. Everything belonging to it now lives under a `week3`
+folder, matching how week 1 is already kept:
+
+- `src/Photobooth.tsx` and `src/replicate.ts` → `src/week3/`
+- `public/assets/` → `public/week3/assets/` (every file in there is a photobooth
+  image, added by the week 3 commits)
+- The photobooth's keyframes came out of the global `src/index.css` into
+  `src/week3/photobooth.css`, imported by `Photobooth.tsx`. `index.css` is now
+  only the font, the Tailwind import and body/form resets.
+
+`src/Landing.tsx` stays at the top level on purpose — it is the front page for
+every week, not week 3's, even though it draws a preview of the photobooth.
 
 ### 2026-09-22 — one site, two pieces
 

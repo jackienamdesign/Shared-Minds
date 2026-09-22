@@ -2,7 +2,7 @@ import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import Landing from './Landing.tsx';
-import Photobooth from './Photobooth.tsx';
+import Photobooth from './week3/Photobooth.tsx';
 import './index.css';
 
 /**

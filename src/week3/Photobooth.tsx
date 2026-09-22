@@ -1,10 +1,11 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 
 import { generatePingu, downloadImage } from './replicate';
+import './photobooth.css';
 
 // BASE_URL carries the GitHub Pages subpath in production and "/" in dev, so
 // these stay correct in both. It always ends in a slash.
-const assetPathPrefix = `${import.meta.env.BASE_URL}assets`;
+const assetPathPrefix = `${import.meta.env.BASE_URL}week3/assets`;
 
 const pinguThumbs = [
   `${assetPathPrefix}/2c42e.png`,

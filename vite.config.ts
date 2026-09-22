@@ -21,6 +21,8 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
-  // Week 1 lives in public/week1 and is copied to the build verbatim — it
+  // public/ is copied to the build verbatim. Week 1 lives in public/week1 — it
   // resolves React through an import map at runtime and must not be bundled.
+  // Week 3's images are in public/week3/assets; its React source is bundled
+  // from src/week3.
 })
