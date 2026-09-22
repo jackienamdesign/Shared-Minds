@@ -182,14 +182,14 @@ export default function Landing() {
           <Piece
             week="Weeks 01 — 02"
             title="Stream of Consciousness"
-            blurb="Type a thought into an open sky. It is classified, judged, and released as a bubble that drifts away from your cursor."
+            blurb="Type your worries into an open sky. Is it productive? Does it push your productivity forward? If not, it'll disappear into the sky."
             preview={<Week1Preview />}
             href={week1Href}
           />
           <Piece
             week="Week 03"
-            title="Interactive Photobooth"
-            blurb="A webcam photobooth that watches for a gesture and answers it — every capture falls out as a polaroid you can pick up."
+            title="Pingu Photobooth"
+            blurb="Pingu was my favorite show growing up and his expressions were so expressive. Take a photo of yourself and embody the Pingu spirit."
             preview={<Week3Preview />}
             onClick={() => {
               window.location.hash = '#/photobooth';
