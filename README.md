@@ -5,7 +5,7 @@ assignment, with a landing page at the root that lets you pick between them.
 
 | | Piece | Lives in | URL |
 |---|---|---|---|
-| Week 01 | Stream of Consciousness | `public/week1/` | `/week1/` |
+| Weeks 01–02 | Stream of Consciousness | `public/week1/` | `/week1/` |
 | Week 03 | Interactive Photobooth | `src/Photobooth.tsx` | `/#/photobooth` |
 
 Live at **https://jackienamdesign.github.io/Shared-Minds/**

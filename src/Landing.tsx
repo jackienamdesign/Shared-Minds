@@ -180,7 +180,7 @@ export default function Landing() {
           }}
         >
           <Piece
-            week="Week 01"
+            week="Weeks 01 — 02"
             title="Stream of Consciousness"
             blurb="Type a thought into an open sky. It is classified, judged, and released as a bubble that drifts away from your cursor."
             preview={<Week1Preview />}
