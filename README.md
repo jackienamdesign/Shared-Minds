@@ -1,14 +1,63 @@
 # Shared Minds
 
-An interactive canvas tool to capture, visualize, and map streams of consciousness in real-time.
+Coursework for Shared Minds (ITP). One repo, one deployed site, one piece per
+assignment, with a landing page at the root that lets you pick between them.
+
+| | Piece | Lives in | URL |
+|---|---|---|---|
+| Week 01 | Stream of Consciousness | `public/week1/` | `/week1/` |
+| Week 03 | Interactive Photobooth | `src/Photobooth.tsx` | `/#/photobooth` |
+
+Live at **https://jackienamdesign.github.io/Shared-Minds/**
+
+## Running it
+
+```bash
+npm install
+npm run dev      # http://localhost:5173/Shared-Minds/
+```
+
+The dev server uses the same `/Shared-Minds/` base path as production, so a
+broken asset path shows up locally instead of only after deploying.
+
+```bash
+npm run build    # -> dist/
+npm run preview  # serve dist/ exactly as GitHub Pages will
+```
+
+## How the two pieces coexist
+
+Week 1 has no build step and week 3 needs one, so they are served differently
+rather than forced into one pipeline:
+
+- **Week 1 lives in `public/`.** Vite copies that directory into the build
+  byte-for-byte, so the import map and CDN `<script>` tags keep resolving at
+  runtime exactly as they always did. It is never bundled.
+- **Week 3 and the landing page are the Vite app** at the repo root, sharing one
+  React bundle.
+- **Routing is hash-based** (`#/photobooth`). GitHub Pages serves static files
+  with no rewrite rules, so a real path like `/week3` would 404 on refresh.
+  Week 1 is not a route — it is a genuine page load out of the app.
+
+## Deploying
+
+`.github/workflows/deploy.yml` builds on every push to `main` and publishes
+`dist/`. This requires **Settings → Pages → Source = GitHub Actions** (not
+"Deploy from a branch"), since the served site is now a build artifact rather
+than the repo contents.
+
+---
+
+# Week 01 — Stream of Consciousness
 
 A person types a worry into a field. It rises as a bubble and floats — or it is
 destroyed, because a machine decided the thought was not about anything
 billable.
 
 ## How it's built
-- **No build step.** Plain ES modules loaded straight from `index.html`, with an
-  import map pointing the bare `react` imports at a CDN. Nothing to compile.
+- **No build step.** Plain ES modules loaded straight from its own `index.html`,
+  with an import map pointing the bare `react` imports at a CDN. Nothing to
+  compile — which is why it sits in `public/` untouched by the bundler.
 - **The field** is `liquid-glass-react`, used for this one element because it is
   the focal point. Everything that floats uses cheap CSS glass instead —
   see the note at the top of `bubbles.js`.
@@ -67,12 +116,10 @@ construction. The column shows how much blunter the piece gets when it falls
 back, which is the standing argument for growing `SELF_AS_CASUALTY`.
 
 ## Getting Started
-Simply open `index.html` in any modern web browser or serve it locally:
 
-```bash
-# Optional: using python or any static server
-python3 -m http.server 8000
-```
+Run the site (`npm run dev`) and open `/Shared-Minds/week1/`. Every file for
+this piece is in `public/week1/`; `calibrate.mjs` stays at the repo root so the
+harness is not published with the site.
 
 ---
 
@@ -81,6 +128,50 @@ python3 -m http.server 8000
 Newest first. One `###` block per working session — date, a short name for what
 it was about, then what changed in plain terms. Keep "still open" notes at the
 bottom of an entry; they are the fastest way back in next time.
+
+### 2026-09-22 — one site, two pieces
+
+**The short version:** the repo used to be one piece served straight from its
+files. It is now a small site with a front page that lets you pick a piece, and
+the week 3 photobooth has been brought in alongside week 1.
+
+**1. Week 1 moved into `public/week1/` and is otherwise untouched.** Vite copies
+that folder into the build verbatim, so the import map and CDN scripts still
+resolve at runtime. Deliberately not bundled — bundling it would have meant
+resolving the bare `react` imports at build time and rewriting a piece whose
+whole premise is that it has no build step. Only two additions: a back link in
+`index.html` and a `.back-link` rule in `style.css`.
+
+**2. Week 3 came over from Figma Make.** `App.tsx` became `src/Photobooth.tsx`.
+The four Figma-specific Vite plugins and `.figma/make/site.json` were dropped —
+they only did anything inside Figma's hosting — so `vite.config.ts` is now about
+20 lines instead of 400.
+
+**3. There's a landing page.** `src/Landing.tsx`, with a CSS-drawn preview of
+each piece rather than screenshots, so the cards don't go stale when a piece is
+edited.
+
+**4. The site is built and deployed by CI now.** Week 3 needs a build and week 1
+doesn't, so GitHub Pages can no longer serve the repo as-is.
+`.github/workflows/deploy.yml` builds and publishes `dist/`.
+
+**5. Toolchain is npm, not pnpm.** The photobooth arrived with a pnpm lockfile,
+but pnpm isn't installed on the machine this was set up on and `.mise.toml`
+wasn't in effect either. `.mise.toml` now just pins Node 22.
+
+**Still open:**
+- **The Pages source has to be changed by hand** — Settings → Pages → Source →
+  GitHub Actions. Until that's flipped, the deploy workflow will run green and
+  the live site will keep serving the old week-1-at-root version.
+- Week 1's live URL moved from `/Shared-Minds/` to `/Shared-Minds/week1/`. The
+  old URL now lands on the picker, so a previously-submitted link still resolves
+  somewhere sensible, but no longer opens the piece directly.
+- The photobooth's film strip and the ⊞ / ☺ / ▭ toolbar buttons are still
+  decorative — the strip shows stock Pingu frames rather than reacting to the
+  captured pose, which is the part week 3 is actually meant to do.
+- Verified by build, typecheck, and serving `dist/` locally. Not opened in a
+  browser here, and the photobooth needs camera permission, so give both pieces
+  a real look before submitting.
 
 ### 2026-09-15 — the judge
 

@@ -1,44 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shared Minds</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Inter, not SF Pro: Apple's license does not permit web embedding. -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div id="app">
-    <!-- Vanta injects its own WebGL canvas in here -->
-    <div id="vanta-bg"></div>
-
-    <!-- React island: liquid glass thought field -->
-    <div id="glass-field-root"></div>
-  </div>
-
-  <!-- Vanta deps: three.js must be r134 — newer releases break Vanta's shaders -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.clouds.min.js"></script>
-
-  <script src="main.js"></script>
-
-  <!-- Resolves the bare "react" / "liquid-glass-react" imports in glass-field.js
-       to CDN URLs, so no bundler is needed. ?external=react,react-dom keeps the
-       library using the same React instance rather than bundling its own. -->
-  <script type="importmap">
-  {
-    "imports": {
-      "react": "https://esm.sh/react@19.1.0",
-      "react/jsx-runtime": "https://esm.sh/react@19.1.0/jsx-runtime",
-      "react-dom": "https://esm.sh/react-dom@19.1.0",
-      "react-dom/client": "https://esm.sh/react-dom@19.1.0/client",
-      "liquid-glass-react": "https://esm.sh/liquid-glass-react@1.1.1?external=react,react-dom"
-    }
-  }
-  </script>
-  <script type="module" src="glass-field.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shared Minds — Jackie Nam</title>
+    <meta name="description" content="Coursework for Shared Minds: interactive pieces exploring shared attention, thought, and presence." />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

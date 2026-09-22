@@ -220,3 +220,28 @@ body {
     animation: none;
   }
 }
+
+/* Back to the site index. Above every other layer here (max is 20). */
+.back-link {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  z-index: 30;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 16px rgba(24, 53, 80, 0.12);
+  font-size: 14px;
+  font-weight: 500;
+  color: #14303d;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 200ms ease;
+}
+
+.back-link:hover {
+  background: rgba(255, 255, 255, 0.78);
+}

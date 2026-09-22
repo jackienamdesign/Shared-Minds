@@ -20,9 +20,9 @@
  * on automatic module syntax detection). No dependencies, no build.
  */
 
-import { judge } from './judge.js';
-import { classify } from './classify.js';
-import { CASES } from './calibration.js';
+import { judge } from './public/week1/judge.js';
+import { classify } from './public/week1/classify.js';
+import { CASES } from './public/week1/calibration.js';
 
 const CONCURRENCY = 6;
 

@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+@font-face {
+  font-family: "Inter:Regular";
+  font-style: normal;
+  font-weight: 400;
+  src: url("https://static.figma.com/font/Inter_1") format("woff2");
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+@keyframes polaroid-drop {
+  0% { transform: translateY(-60px) rotate(var(--rot)) scale(0.85); opacity: 0; }
+  60% { transform: translateY(6px) rotate(var(--rot)) scale(1.02); opacity: 1; }
+  100% { transform: translateY(0) rotate(var(--rot)) scale(1); opacity: 1; }
+}
+
+@keyframes shutter-flash {
+  0% { opacity: 0; }
+  20% { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+@keyframes countdown-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  40% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.polaroid-enter {
+  animation: polaroid-drop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.shutter-flash {
+  animation: shutter-flash 0.35s ease-out forwards;
+}
+
+.countdown-pop {
+  animation: countdown-pop 0.3s ease-out forwards;
+}
+
+/* Scrollbar hide */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
