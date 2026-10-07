@@ -24,6 +24,14 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(import.meta.dirname, 'index.html'),
+        week4: path.resolve(import.meta.dirname, 'week4/index.html'),
+      },
+    },
+  },
   // public/ is copied to the build verbatim. Week 1 lives in public/week1 — it
   // resolves React through an import map at runtime and must not be bundled.
   // Week 3's images are in public/week3/assets; its React source is bundled

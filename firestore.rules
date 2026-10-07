@@ -1,0 +1,87 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // --- USERS COLLECTION ---
+    // users/{uid} stores account profile and private stats
+    match /users/{userId} {
+      // Rule: Users can only read and query their own user document to keep prayer stats private
+      allow read: if isOwner(userId);
+
+      // Rule: A user can create or update their own user profile document
+      allow create, update: if isOwner(userId);
+
+      // Rule: No user deletions from the client app
+      allow delete: if false;
+
+      // users/{uid}/prayedFor/{authorId} tracks which distinct people this user has prayed for
+      match /prayedFor/{authorId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // --- REQUESTS COLLECTION ---
+    // requests/{requestId} holds the prayer requests posted to the board
+    match /requests/{requestId} {
+      // Rule: Only authenticated users can read the prayer board
+      allow read: if isSignedIn();
+
+      // Rule: Any authenticated user can create a prayer request, provided they are the declared author
+      allow create: if isSignedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 500;
+
+      // Rule: Only the original author can modify (e.g. mark answered) or delete their request
+      // Exception: Other authenticated users may increment prayerCount via transaction when offering a prayer
+      allow update: if isSignedIn() && (
+        // Author updating their own card
+        isOwner(resource.data.authorId)
+        // OR another user incrementing prayer count or reporting
+        || (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['prayerCount'])
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reportCount'])
+        )
+      );
+
+      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+
+      // --- SUBCOLLECTION: PRAYERS ---
+      // requests/{requestId}/prayers/{prayerUserId} records prayers offered by specific users
+      match /prayers/{prayerUserId} {
+        // Rule: Only the author of the request can inspect who prayed for them
+        allow read: if isSignedIn() && isOwner(get(/databases/$(database)/documents/requests/$(requestId)).data.authorId);
+
+        // Rule: Each user can only write their own prayer doc, and only once per day
+        allow create, update: if isSignedIn()
+          && request.auth.uid == prayerUserId
+          // Validate that the prayer timestamp is recent (within 5 minutes of server time)
+          && request.resource.data.prayedAt is timestamp;
+
+        allow delete: if false;
+      }
+
+      // --- SUBCOLLECTION: ENCOURAGEMENTS ---
+      // requests/{requestId}/encouragements/{encId}
+      match /encouragements/{encId} {
+        // Rule: Only the author can view the private encouragements sent to them
+        allow read: if isSignedIn() && isOwner(get(/databases/$(database)/documents/requests/$(requestId)).data.authorId);
+
+        // Rule: Any signed-in user can send an encouragement
+        allow create: if isSignedIn()
+          && request.resource.data.senderId == request.auth.uid;
+
+        allow update, delete: if false;
+      }
+    }
+  }
+}

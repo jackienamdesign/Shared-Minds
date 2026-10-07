@@ -3,15 +3,14 @@ import { createRoot } from 'react-dom/client';
 
 import Landing from './Landing.tsx';
 import Photobooth from './week3/Photobooth.tsx';
-import StoryWorlds from './week4/StoryWorlds.tsx';
 import './index.css';
 
 /**
  * Hash routing, not history routing: GitHub Pages serves static files with no
  * rewrite rules, so a deep path like /week3 would 404 on a hard refresh.
  *
- * Week 1 is not a route here — it is a standalone no-build page in public/week1
- * and is reached by a real navigation out of this app.
+ * Week 1 and Week 4 are standalone multi-page entries (public/week1 and week4/)
+ * reached by real navigations.
  */
 function useHashRoute() {
   const [hash, setHash] = useState(() => window.location.hash);
@@ -29,12 +28,11 @@ function Site() {
   const route = useHashRoute();
 
   useEffect(() => {
-    // The landing page and storyworlds scroll; the photobooth is a fixed-size stage.
+    // The landing page scrolls; the photobooth is a fixed-size stage.
     document.body.style.overflow = route === 'photobooth' ? 'hidden' : '';
   }, [route]);
 
   if (route === 'photobooth') return <Photobooth />;
-  if (route === 'storyworlds') return <StoryWorlds />;
   return <Landing />;
 }
 

@@ -11,6 +11,8 @@ const muted = 'rgba(20, 48, 61, 0.62)';
 
 /** Week 1 runs as a standalone no-build page, so it needs a real navigation. */
 const week1Href = `${import.meta.env.BASE_URL}week1/`;
+/** Week 4 Prayer Board runs as its own gentle vanilla JS application. */
+const week4Href = `${import.meta.env.BASE_URL}week4/`;
 
 function Week1Preview() {
   return (
@@ -90,76 +92,67 @@ function Week4Preview() {
   return (
     <div
       className="relative w-full h-full overflow-hidden"
-      style={{ background: 'linear-gradient(145deg, #071526 0%, #020617 100%)' }}
+      style={{ background: 'linear-gradient(145deg, #fdf8f5 0%, #f7eee7 48%, #eef5f0 100%)' }}
     >
-      {/* Star particles */}
-      <div style={{ position: 'absolute', left: '15%', top: '22%', width: 3, height: 3, borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 6px #38bdf8' }} />
-      <div style={{ position: 'absolute', right: '22%', top: '18%', width: 2, height: 2, borderRadius: '50%', background: '#fff' }} />
-      <div style={{ position: 'absolute', left: '32%', bottom: '28%', width: 2.5, height: 2.5, borderRadius: '50%', background: '#f43f5e' }} />
-      <div style={{ position: 'absolute', right: '35%', bottom: '20%', width: 3, height: 3, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 6px #34d399' }} />
+      {/* Soft pastel ambient glow */}
+      <div style={{ position: 'absolute', left: '-10%', top: '10%', width: '60%', height: '50%', borderRadius: '50%', background: 'rgba(254, 226, 226, 0.55)', filter: 'blur(20px)' }} />
+      <div style={{ position: 'absolute', right: '-10%', bottom: '5%', width: '55%', height: '55%', borderRadius: '50%', background: 'rgba(209, 250, 229, 0.45)', filter: 'blur(22px)' }} />
 
-      {/* Nebula glow */}
+      {/* Gentle sticky note 1 (background tilt) */}
       <div
+        className="absolute"
         style={{
-          position: 'absolute',
-          left: '50%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '75%',
-          height: '75%',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(14,165,233,0.2) 0%, rgba(168,85,247,0.12) 50%, transparent 75%)',
-          filter: 'blur(16px)',
-        }}
-      />
-
-      {/* Orbit ring */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 140,
-          height: 140,
-          borderRadius: '50%',
-          border: '1px dashed rgba(56,189,248,0.25)',
-        }}
-      />
-
-      {/* Floating storyboard frame thumbnail */}
-      <div
-        className="absolute left-1/2 top-1/2"
-        style={{
-          transform: 'translate(-50%, -50%)',
-          width: 110,
-          height: 75,
-          borderRadius: 8,
-          background: '#0f172a',
-          border: '1.5px solid rgba(56,189,248,0.6)',
-          boxShadow: '0 12px 30px rgba(0,0,0,0.6)',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
+          left: '18%',
+          top: '22%',
+          width: 96,
+          height: 104,
+          borderRadius: 10,
+          background: '#fef3c7',
+          boxShadow: '0 8px 24px rgba(180, 83, 9, 0.08)',
+          transform: 'rotate(-7deg)',
+          padding: '10px 8px',
+          border: '1px solid rgba(251, 191, 36, 0.3)',
         }}
       >
-        <div style={{ height: 16, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 6px' }}>
-          <span style={{ fontSize: 8, fontFamily: 'monospace', color: '#38bdf8' }}>PANEL #3</span>
-          <span style={{ fontSize: 9 }}>🐧</span>
-        </div>
-        <div style={{ flex: 1, background: 'linear-gradient(135deg, #0284c7, #38bdf8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: '#fff', color: '#0f172a', fontSize: 7, fontWeight: 700, padding: '2px 5px', borderRadius: 999, border: '1px solid #000' }}>
-            NOOT NOOT!
-          </div>
-        </div>
+        <div style={{ width: '70%', height: 4, borderRadius: 2, background: 'rgba(180, 83, 9, 0.25)', marginBottom: 6 }} />
+        <div style={{ width: '90%', height: 3, borderRadius: 2, background: 'rgba(180, 83, 9, 0.15)', marginBottom: 4 }} />
+        <div style={{ width: '55%', height: 3, borderRadius: 2, background: 'rgba(180, 83, 9, 0.15)' }} />
       </div>
 
-      {/* Constellation nodes */}
-      <div style={{ position: 'absolute', left: '20%', top: '65%', padding: '2px 5px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', fontSize: 9, color: '#e2e8f0', fontFamily: 'monospace' }}>
-        ⚡ Sora
-      </div>
-      <div style={{ position: 'absolute', right: '14%', top: '25%', padding: '2px 5px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', fontSize: 9, color: '#e2e8f0', fontFamily: 'monospace' }}>
-        ☁️ Aria
+      {/* Gentle sticky note 2 (foreground tilt with candle) */}
+      <div
+        className="absolute"
+        style={{
+          right: '20%',
+          top: '26%',
+          width: 108,
+          height: 114,
+          borderRadius: 12,
+          background: '#ffffff',
+          boxShadow: '0 12px 28px rgba(71, 85, 105, 0.12)',
+          transform: 'rotate(5deg)',
+          padding: '12px 10px',
+          border: '1px solid rgba(226, 232, 240, 0.8)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 9, fontWeight: 600, color: '#059669', background: '#d1fae5', padding: '1px 5px', borderRadius: 6 }}>
+              gratitude
+            </span>
+            <span style={{ fontSize: 10 }}>🌷</span>
+          </div>
+          <div style={{ width: '85%', height: 4, borderRadius: 2, background: '#cbd5e1', marginBottom: 5 }} />
+          <div style={{ width: '65%', height: 4, borderRadius: 2, background: '#e2e8f0' }} />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 6px', background: '#fef3c7', borderRadius: 999, width: 'fit-content' }}>
+          <span style={{ fontSize: 10 }}>🕯️</span>
+          <span style={{ fontSize: 8, fontWeight: 600, color: '#92400e' }}>I prayed</span>
+        </div>
       </div>
     </div>
   );
@@ -276,12 +269,10 @@ export default function Landing() {
           />
           <Piece
             week="Week 04"
-            title="Shared Worlds: Storyboards"
-            blurb="A multi-user sequential comic & storyboard studio. Build visual frames together, navigate parallel multiverse worlds, and test the scale sprawl of AI agents."
+            title="Prayer Board"
+            blurb="A cozy, gentle social board where people post things they need prayer for and hold space for others. Calm, kind, and strictly non-competitive."
             preview={<Week4Preview />}
-            onClick={() => {
-              window.location.hash = '#/storyworlds';
-            }}
+            href={week4Href}
           />
         </div>
 
