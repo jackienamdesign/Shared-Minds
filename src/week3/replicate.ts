@@ -48,7 +48,7 @@ export async function generatePingu(imageDataUrl: string): Promise<string> {
         // The base64 string from toDataURL() goes in directly; the proxy swaps it
         // for a temporary hosted URL, which is what the model actually wants.
         image_input: [imageDataUrl],
-        output_format: 'png',
+        output_format: 'jpg',
       },
     }),
   });

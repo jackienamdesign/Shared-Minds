@@ -17,10 +17,24 @@
  */
 
 const PROXY_URL = 'https://itp-ima-replicate-proxy.web.app/api/create_n_get';
-const MODEL = 'google/gemini-3.1-pro';
+// Fast model: gemini-2.5-flash executes in ~0.5s instead of gemini-3.1-pro's 10-20s thinking delay
+const FAST_MODEL = 'google/gemini-2.5-flash';
+const FALLBACK_MODEL = 'google/gemini-3.1-pro';
 
-/** Verdicts take 3–8s. Past this we stop waiting and let the lexicon rule. */
-const TIMEOUT = 20000;
+/** Fast failover: if proxy doesn't reply in 7s, fall back gracefully to the offline lexicon. */
+const TIMEOUT = 7000;
+
+// Client-side cache to make repeat or similar thoughts resolve instantly (0ms latency)
+const verdictCache = new Map();
+try {
+  const stored = sessionStorage.getItem('sm_verdict_cache');
+  if (stored) {
+    const parsed = JSON.parse(stored);
+    Object.entries(parsed).forEach(([k, v]) => verdictCache.set(k, v));
+  }
+} catch {
+  // Ignore sessionStorage errors
+}
 
 /**
  * The rule, in prose.
@@ -146,40 +160,70 @@ function parseVerdict(raw) {
  *   caller should fall back to classify().
  */
 export async function judge(text) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT);
+  const normalized = (text || '').trim().toLowerCase();
+  if (!normalized) return null;
+
+  // 1. Instant Cache Hit (0ms latency)
+  if (verdictCache.has(normalized)) {
+    return verdictCache.get(normalized);
+  }
+
+  async function callModel(modelName, maxTokens = 500, timeoutMs = 8000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const inputPayload = {
+        prompt: buildPrompt(text),
+        temperature: 0,
+        max_output_tokens: maxTokens,
+      };
+      if (modelName === FALLBACK_MODEL) {
+        inputPayload.thinking_level = 'low';
+      }
+
+      const response = await fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: modelName,
+          input: inputPayload
+        })
+      });
+
+      if (!response.ok) throw new Error(`proxy ${response.status}`);
+      const payload = await response.json();
+      if (payload.error) throw new Error(payload.error);
+      return parseVerdict(readOutput(payload));
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 
   try {
-    const response = await fetch(PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: MODEL,
-        input: {
-          prompt: buildPrompt(text),
-          // Deterministic: the same thought must always meet the same fate.
-          temperature: 0,
-          // Gemini 3.1 spends output budget on thinking before it answers, so a
-          // tight cap starves the one word we asked for and returns empty.
-          max_output_tokens: 2000,
-          // Valid values are low/medium/high — "minimal" 500s. Low is plenty
-          // for a binary verdict and keeps the wait down.
-          thinking_level: 'low'
-        }
-      })
-    });
+    // Try fast model first (~0.5s - 1s response time)
+    let parsed = null;
+    try {
+      parsed = await callModel(FAST_MODEL, 500, 7000);
+    } catch (fastErr) {
+      console.warn('[Shared Minds] fast model failed or timed out, trying fallback model', fastErr);
+      parsed = await callModel(FALLBACK_MODEL, 2000, 15000);
+    }
 
-    if (!response.ok) throw new Error(`proxy ${response.status}`);
+    if (parsed) {
+      verdictCache.set(normalized, parsed);
+      try {
+        const obj = Object.fromEntries(verdictCache.entries());
+        sessionStorage.setItem('sm_verdict_cache', JSON.stringify(obj));
+      } catch {
+        // Ignore storage errors
+      }
+    }
 
-    const payload = await response.json();
-    if (payload.error) throw new Error(payload.error);
-
-    return parseVerdict(readOutput(payload));
+    return parsed;
   } catch (err) {
     console.warn('[Shared Minds] judge unreachable — falling back to the lexicon.', err);
     return null;
-  } finally {
-    clearTimeout(timer);
   }
 }

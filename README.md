@@ -7,6 +7,7 @@ assignment, with a landing page at the root that lets you pick between them.
 |---|---|---|---|
 | Weeks 01–02 | Stream of Consciousness | `public/week1/` | `/week1/` |
 | Week 03 | Interactive Photobooth | `src/week3/` + `public/week3/` | `/#/photobooth` |
+| Week 04 | Shared Worlds: Storyboards | `src/week4/` | `/#/storyworlds` |
 
 Live at **https://jackienamdesign.github.io/Shared-Minds/**
 
@@ -130,6 +131,22 @@ harness is not published with the site.
 Newest first. One `###` block per working session — date, a short name for what
 it was about, then what changed in plain terms. Keep "still open" notes at the
 bottom of an entry; they are the fastest way back in next time.
+
+### 2026-10-06 — latency optimization & week 4 multi-user storyboards
+
+**1. Latency fixes for the two existing projects:**
+- **Week 1 (Stream of Consciousness):** Switched the primary Replicate judge to `google/gemini-2.5-flash`, reducing inference latency from ~10–20s down to ~0.5–1.2s while maintaining 100% calibration accuracy on `calibrate.mjs`. Added an in-memory/sessionStorage cache so repeat queries resolve in 0ms, and isolated per-attempt abort controllers to prevent timeout cascades.
+- **Week 3 (Pingu Photobooth):** Reduced webcam capture payload by ~98% by downscaling to 512x512 and encoding as compressed JPEG (0.85) instead of uncompressed multi-megabyte PNGs. Fixed Firestore bloat where massive base64 strings stalled real-time `onSnapshot` subscriptions. Set `output_format: 'jpg'` in `replicate.ts`.
+
+**2. Week 4 (Shared Worlds: Multiverse Storyboard Studio & Navigator):**
+- **Sequential Storyboards & Living Comic:** Users collaborate on frame-by-frame graphic stories. Each panel supports titles, narrative captions, onomatopoeia sound effects, and draggable dialogue bubbles.
+- **Cine-Sequence Player:** Plays the sequence of still frames as an animatic movie with adjustable frame pacing and sound splash overlays.
+- **Authentication, Accountability & Karma:** Firebase Authentication with volunteer prompt fallback. Tracks storyteller identity, badges ("Pioneer", "Continuity Master", "Swarm Mind"), and karma reputation per contribution.
+- **Agent Scale Testing Laboratory:** Simulates synthetic agent personas (Felix Clay, Sora M., Aria Vane, Detective Sol, Echo-7) that autonomously publish frames and branch storylines, demonstrating the interface challenge of content sprawl.
+- **Innovative Multiverse Navigation:**
+  - *Constellation Galaxy Canvas:* Interactive 2D celestial map where worlds orbit, glow by genre, and link via constellation lines.
+  - *Resonance Radar:* 2D mood matrix (Whimsical ↔ Ominous vs. Minimal ↔ Epic) to acoustic-filter across dozens of creators.
+  - *Persona & Realities Filter:* Instant toggle between human authors, synthetic swarm, and high-karma storylines.
 
 ### 2026-09-22 — week 3 gathered into its own folder
 

@@ -19,6 +19,8 @@ import {
   getDownloadURL 
 } from 'firebase/storage';
 
+import { getAuth } from 'firebase/auth';
+
 const firebaseConfig = {
   apiKey: "AIzaSyDb33PRJU4RIZJy_ff5RbZVDF0gqt-j6rk",
   authDomain: "sharedmindsjackie.firebaseapp.com",
@@ -30,6 +32,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 

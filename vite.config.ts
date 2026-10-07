@@ -16,6 +16,9 @@ export default defineConfig({
   // GitHub Pages would not do. 'mpa' keeps local behaviour honest.
   appType: 'mpa',
   plugins: [react(), tailwindcss()],
+  optimizeDeps: {
+    exclude: ['liquid-glass-react'],
+  },
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),

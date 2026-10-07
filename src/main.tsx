@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 
 import Landing from './Landing.tsx';
 import Photobooth from './week3/Photobooth.tsx';
+import StoryWorlds from './week4/StoryWorlds.tsx';
 import './index.css';
 
 /**
@@ -28,11 +29,13 @@ function Site() {
   const route = useHashRoute();
 
   useEffect(() => {
-    // The landing page scrolls; the photobooth is a fixed-size stage.
+    // The landing page and storyworlds scroll; the photobooth is a fixed-size stage.
     document.body.style.overflow = route === 'photobooth' ? 'hidden' : '';
   }, [route]);
 
-  return route === 'photobooth' ? <Photobooth /> : <Landing />;
+  if (route === 'photobooth') return <Photobooth />;
+  if (route === 'storyworlds') return <StoryWorlds />;
+  return <Landing />;
 }
 
 createRoot(document.getElementById('root')!).render(

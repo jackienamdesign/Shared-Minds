@@ -136,14 +136,29 @@ export default function App() {
     function snap() {
       const video = videoRef.current!;
       const canvas = canvasRef.current!;
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
+
+      // Capture at optimized 512x512 max dimension to reduce upload latency by ~98%
+      const rawW = video.videoWidth || 640;
+      const rawH = video.videoHeight || 480;
+      const targetSize = 512;
+      const aspect = rawW / rawH;
+      let targetW = targetSize;
+      let targetH = Math.round(targetSize / aspect);
+      if (rawH > rawW) {
+        targetH = targetSize;
+        targetW = Math.round(targetSize * aspect);
+      }
+
+      canvas.width = targetW;
+      canvas.height = targetH;
       const ctx = canvas.getContext('2d')!;
       ctx.save();
       ctx.scale(-1, 1);
-      ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, -targetW, 0, targetW, targetH);
       ctx.restore();
-      const dataUrl = canvas.toDataURL('image/png');
+
+      // Compress to efficient JPEG (typically ~35KB vs ~2MB uncompressed PNG)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
 
       setFlashing(true);
       setTimeout(() => setFlashing(false), 400);
@@ -158,7 +173,7 @@ export default function App() {
       const fileAwayShortly = () =>
         setTimeout(() => updateById({ filed: true }), HOLD_BEFORE_FILING_MS);
 
-      // Async Firestore & Storage persistence
+      // Async Firestore & Storage persistence with optimized payload
       let docIdPromise = savePhotoToFirestore({
         photoUrl: dataUrl,
         status: 'developing',
@@ -168,7 +183,7 @@ export default function App() {
         if (docId) {
           updateById({ firebaseDocId: docId });
           // Upload webcam capture to Firebase Storage in background
-          const storageUrl = await uploadPhotoToStorage(dataUrl, `photo-${Date.now()}-${id}.png`);
+          const storageUrl = await uploadPhotoToStorage(dataUrl, `photo-${Date.now()}-${id}.jpg`);
           if (storageUrl && storageUrl !== dataUrl) {
             updatePhotoInFirestore(docId, { photoUrl: storageUrl });
           }

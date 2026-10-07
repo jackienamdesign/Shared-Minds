@@ -86,6 +86,85 @@ function Week3Preview() {
   );
 }
 
+function Week4Preview() {
+  return (
+    <div
+      className="relative w-full h-full overflow-hidden"
+      style={{ background: 'linear-gradient(145deg, #071526 0%, #020617 100%)' }}
+    >
+      {/* Star particles */}
+      <div style={{ position: 'absolute', left: '15%', top: '22%', width: 3, height: 3, borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 6px #38bdf8' }} />
+      <div style={{ position: 'absolute', right: '22%', top: '18%', width: 2, height: 2, borderRadius: '50%', background: '#fff' }} />
+      <div style={{ position: 'absolute', left: '32%', bottom: '28%', width: 2.5, height: 2.5, borderRadius: '50%', background: '#f43f5e' }} />
+      <div style={{ position: 'absolute', right: '35%', bottom: '20%', width: 3, height: 3, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 6px #34d399' }} />
+
+      {/* Nebula glow */}
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '75%',
+          height: '75%',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(14,165,233,0.2) 0%, rgba(168,85,247,0.12) 50%, transparent 75%)',
+          filter: 'blur(16px)',
+        }}
+      />
+
+      {/* Orbit ring */}
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 140,
+          height: 140,
+          borderRadius: '50%',
+          border: '1px dashed rgba(56,189,248,0.25)',
+        }}
+      />
+
+      {/* Floating storyboard frame thumbnail */}
+      <div
+        className="absolute left-1/2 top-1/2"
+        style={{
+          transform: 'translate(-50%, -50%)',
+          width: 110,
+          height: 75,
+          borderRadius: 8,
+          background: '#0f172a',
+          border: '1.5px solid rgba(56,189,248,0.6)',
+          boxShadow: '0 12px 30px rgba(0,0,0,0.6)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <div style={{ height: 16, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 6px' }}>
+          <span style={{ fontSize: 8, fontFamily: 'monospace', color: '#38bdf8' }}>PANEL #3</span>
+          <span style={{ fontSize: 9 }}>🐧</span>
+        </div>
+        <div style={{ flex: 1, background: 'linear-gradient(135deg, #0284c7, #38bdf8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#fff', color: '#0f172a', fontSize: 7, fontWeight: 700, padding: '2px 5px', borderRadius: 999, border: '1px solid #000' }}>
+            NOOT NOOT!
+          </div>
+        </div>
+      </div>
+
+      {/* Constellation nodes */}
+      <div style={{ position: 'absolute', left: '20%', top: '65%', padding: '2px 5px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', fontSize: 9, color: '#e2e8f0', fontFamily: 'monospace' }}>
+        ⚡ Sora
+      </div>
+      <div style={{ position: 'absolute', right: '14%', top: '25%', padding: '2px 5px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', fontSize: 9, color: '#e2e8f0', fontFamily: 'monospace' }}>
+        ☁️ Aria
+      </div>
+    </div>
+  );
+}
+
 interface PieceProps {
   week: string;
   title: string;
@@ -157,7 +236,7 @@ export default function Landing() {
       className="w-full min-h-screen"
       style={{ background: 'linear-gradient(185deg, #eaf6fc 0%, #d4ebf7 48%, #c3e2f2 100%)' }}
     >
-      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '96px 28px 88px' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '96px 28px 88px' }}>
         <header style={{ marginBottom: 56 }}>
           <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.13em', textTransform: 'uppercase', color: muted }}>
             Shared Minds · ITP
@@ -165,16 +244,16 @@ export default function Landing() {
           <h1 style={{ margin: '18px 0 0', fontSize: 'clamp(34px, 5.5vw, 54px)', fontWeight: 300, letterSpacing: '-0.02em', color: ink, lineHeight: 1.1 }}>
             Jackie Nam
           </h1>
-          <p style={{ margin: '20px 0 0', maxWidth: 560, fontSize: 17, lineHeight: 1.6, color: muted }}>
-            A set of interactive pieces about attention, thought, and what it feels like
-            to be seen by a machine. Pick one to explore.
+          <p style={{ margin: '20px 0 0', maxWidth: 620, fontSize: 17, lineHeight: 1.6, color: muted }}>
+            A set of interactive pieces exploring human-machine cognition, creative agency,
+            and collaborative storytelling across parallel realities.
           </p>
         </header>
 
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
             gap: 28,
             alignItems: 'start',
           }}
@@ -193,6 +272,15 @@ export default function Landing() {
             preview={<Week3Preview />}
             onClick={() => {
               window.location.hash = '#/photobooth';
+            }}
+          />
+          <Piece
+            week="Week 04"
+            title="Shared Worlds: Storyboards"
+            blurb="A multi-user sequential comic & storyboard studio. Build visual frames together, navigate parallel multiverse worlds, and test the scale sprawl of AI agents."
+            preview={<Week4Preview />}
+            onClick={() => {
+              window.location.hash = '#/storyworlds';
             }}
           />
         </div>
