@@ -1,6 +1,14 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 
 import { generatePingu, downloadImage } from './replicate';
+import {
+  savePhotoToFirestore,
+  updatePhotoInFirestore,
+  uploadPhotoToStorage,
+  uploadExternalImageToStorage,
+  subscribeToSavedPhotos,
+  StoredPhoto,
+} from '../firebase';
 import './photobooth.css';
 
 // BASE_URL carries the GitHub Pages subpath in production and "/" in dev, so
@@ -32,6 +40,7 @@ const HOLD_BEFORE_FILING_MS = 4400;
 
 interface Polaroid {
   id: number;
+  firebaseDocId?: string;
   /** The real webcam capture, shown while Pingu is being generated. */
   photoUrl: string;
   /** The generated Pingu. Undefined until the model answers. */
@@ -52,14 +61,23 @@ export default function App() {
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState(false);
   const [polaroids, setPolaroids] = useState<Polaroid[]>([]);
+  const [communityPhotos, setCommunityPhotos] = useState<StoredPhoto[]>([]);
   const [flashing, setFlashing] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
-  // Stored as an id rather than the polaroid object: if you open one while it is
-  // still developing, holding a copy would freeze it mid-develop — looking it up
-  // by id each render means the open polaroid turns into Pingu while you watch.
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  // Stored as an id (number for local, string for firebase doc)
+  const [selectedId, setSelectedId] = useState<number | string | null>(null);
   const polaroidIdRef = useRef(0);
   const stripRef = useRef<HTMLDivElement>(null);
+
+  // Subscribe to community photos stored in Firebase
+  useEffect(() => {
+    const unsubscribe = subscribeToSavedPhotos((photos) => {
+      setCommunityPhotos(photos);
+    });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     // StrictMode runs this effect twice in dev: mount, clean up, mount again.
@@ -130,46 +148,88 @@ export default function App() {
       setFlashing(true);
       setTimeout(() => setFlashing(false), 400);
 
-      // The polaroid appears in front of the booth holding your real photo, the
-      // way one would slide out of a real machine, and develops there. Nothing
-      // here waits — the request runs in the background and updates this one
-      // polaroid by id when it lands.
       const id = ++polaroidIdRef.current;
       setPolaroids(prev => [...prev, { id, photoUrl: dataUrl, status: 'developing', filed: false }]);
 
       const updateById = (changes: Partial<Polaroid>) =>
         setPolaroids(prev => prev.map(p => (p.id === id ? { ...p, ...changes } : p)));
 
-      // Whether Pingu arrives or the request fails, the polaroid is held in
-      // front long enough to look at, then files itself into the strip.
+      // File away into strip after timer
       const fileAwayShortly = () =>
         setTimeout(() => updateById({ filed: true }), HOLD_BEFORE_FILING_MS);
 
+      // Async Firestore & Storage persistence
+      let docIdPromise = savePhotoToFirestore({
+        photoUrl: dataUrl,
+        status: 'developing',
+      });
+
+      docIdPromise.then(async (docId) => {
+        if (docId) {
+          updateById({ firebaseDocId: docId });
+          // Upload webcam capture to Firebase Storage in background
+          const storageUrl = await uploadPhotoToStorage(dataUrl, `photo-${Date.now()}-${id}.png`);
+          if (storageUrl && storageUrl !== dataUrl) {
+            updatePhotoInFirestore(docId, { photoUrl: storageUrl });
+          }
+        }
+      });
+
       generatePingu(dataUrl)
-        .then(pinguUrl => {
+        .then(async (pinguUrl) => {
           updateById({ pinguUrl, status: 'done' });
           fileAwayShortly();
+
+          const docId = await docIdPromise;
+          // Upload Pingu generated render to Firebase Storage for permanent archival
+          const permanentPinguUrl = await uploadExternalImageToStorage(
+            pinguUrl,
+            `pingu-${Date.now()}-${id}.png`
+          );
+
+          if (docId) {
+            updatePhotoInFirestore(docId, {
+              pinguUrl: permanentPinguUrl,
+              status: 'done',
+            });
+          }
         })
-        .catch((err: unknown) => {
-          // Left visible in the console on purpose — when a prompt or a model
-          // name is wrong, this message is where it says so.
+        .catch(async (err: unknown) => {
           console.error('Pingu generation failed:', err);
           updateById({ status: 'failed' });
           fileAwayShortly();
+
+          const docId = await docIdPromise;
+          if (docId) {
+            updatePhotoInFirestore(docId, { status: 'failed' });
+          }
         });
     }
   }, [countdown]);
 
-  const selectedPolaroid = polaroids.find(p => p.id === selectedId) ?? null;
+  // Lookup selected polaroid from either local state or loaded community photos
+  const selectedPolaroid = (() => {
+    if (selectedId === null) return null;
+    if (typeof selectedId === 'number') {
+      return polaroids.find(p => p.id === selectedId) ?? null;
+    }
+    const community = communityPhotos.find(p => p.id === selectedId);
+    if (!community) return null;
+    return {
+      id: community.id,
+      photoUrl: community.photoUrl,
+      pinguUrl: community.pinguUrl,
+      status: community.status,
+      filed: true,
+    };
+  })();
 
   // The one currently developing in front of the booth, and the session's
   // record of everything already filed into the strip.
   const activePolaroid = polaroids.find(p => !p.filed) ?? null;
   const filedPolaroids = polaroids.filter(p => p.filed);
 
-  // New shots file in at the right-hand end, past the stock frames — which
-  // already fill the strip's width, so without this the photo you just took
-  // would land off-screen. Scroll the strip to its end whenever one arrives.
+  // New shots file in at the right-hand end, past the stock frames
   useEffect(() => {
     const strip = stripRef.current;
     if (!strip || filedPolaroids.length === 0) return;
@@ -180,10 +240,6 @@ export default function App() {
     <div
       className="relative w-full min-h-screen overflow-hidden"
       style={{
-        // The claymation arctic scene. Anchored to the bottom so the igloo and
-        // snowman stay on screen on short windows — the sky is the part that
-        // can afford to be cropped. #1d4ea8 matches the sky so a taller window
-        // extends it rather than showing a seam.
         backgroundColor: '#1d4ea8',
         backgroundImage: `url(${assetPathPrefix}/arctic-bg.jpeg)`,
         backgroundSize: 'cover',
@@ -227,10 +283,6 @@ export default function App() {
 
       {/*
         The developing polaroid, in front of the booth.
-
-        zIndex 60 puts it above the Photo Booth window (10) so it is never hidden
-        behind the screen it came out of. Only the unfiled polaroid lives here —
-        once it files itself it reappears in the strip along the bottom.
       */}
       {activePolaroid && (
         <div
@@ -238,8 +290,6 @@ export default function App() {
           className="absolute polaroid-present"
           style={{
             left: '50%',
-            // Tracks the window's top (148) so it stays centred on the screen
-            // it slid out of — move one and this needs moving with it.
             top: 252,
             zIndex: 60,
             pointerEvents: 'none',
@@ -252,12 +302,6 @@ export default function App() {
             width: 300,
           }}>
             <div style={{ position: 'relative', width: '100%', height: 260, overflow: 'hidden', background: '#2b2b2b' }}>
-              {/*
-                Both images are stacked. The real photo sits underneath, dimmed
-                and desaturated like an undeveloped print; Pingu fades in on top
-                of it when he arrives, so the change reads as one picture
-                developing rather than two pictures swapping.
-              */}
               <img
                 src={activePolaroid.photoUrl}
                 alt="Your photo"
@@ -298,7 +342,6 @@ export default function App() {
         className="absolute"
         style={{
           left: '50%',
-          // Sits well clear of the tip pill above it (which ends around y=86).
           top: 148,
           transform: 'translateX(-50%)',
           width: 871,
@@ -321,13 +364,6 @@ export default function App() {
 
         {/* Video area */}
         <div style={{ position: 'relative', background: '#565656', height: 490, overflow: 'hidden' }}>
-          {/*
-            Always mounted, never conditional. The effect that starts the camera
-            needs videoRef.current to exist so it can attach the stream — but
-            cameraReady only turns true once that stream fires onloadedmetadata.
-            Gating the element on cameraReady deadlocks the two: no element, so
-            no stream, so the flag never flips. Hide it with opacity instead.
-          */}
           <video
             ref={videoRef}
             autoPlay
@@ -382,9 +418,7 @@ export default function App() {
         </div>
 
         {/*
-          Film strip — the session's record. The stock Pingu poses sit first so
-          the strip never looks empty at the start, and your own shots append to
-          the right of them in the order you took them, newest at the far end.
+          Film strip — the session's record + community saved photos from Firebase
         */}
         <div
           ref={stripRef}
@@ -399,6 +433,31 @@ export default function App() {
               style={{ height: 62, width: 'auto', flexShrink: 0, objectFit: 'cover', opacity: 0.55 }}
             />
           ))}
+
+          {/* Community photos from Firebase (that are not currently active in local session) */}
+          {communityPhotos
+            .filter(cp => cp.id && !filedPolaroids.some(fp => fp.firebaseDocId === cp.id))
+            .map(cp => (
+              <button
+                key={cp.id}
+                onClick={() => setSelectedId(cp.id!)}
+                className="strip-file-in"
+                title="Open photo from gallery"
+                style={{
+                  flexShrink: 0, height: 62, padding: 0, border: 'none', background: 'transparent',
+                  cursor: 'pointer', lineHeight: 0,
+                }}
+              >
+                <img
+                  src={cp.pinguUrl ?? cp.photoUrl}
+                  alt={cp.pinguUrl ? 'You as Pingu' : 'Saved photo'}
+                  style={{
+                    height: 62, width: 62, objectFit: 'cover', display: 'block',
+                    border: '2px solid rgba(255,255,255,0.7)',
+                  }}
+                />
+              </button>
+            ))}
 
           {filedPolaroids.map(p => (
             <button
@@ -416,7 +475,6 @@ export default function App() {
                 alt={p.pinguUrl ? 'You as Pingu' : 'Your photo'}
                 style={{
                   height: 62, width: 62, objectFit: 'cover', display: 'block',
-                  // A thin white edge marks yours apart from the stock frames.
                   border: '2px solid #fff',
                 }}
               />
