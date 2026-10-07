@@ -6,8 +6,9 @@
   <title>Prayer Board · Shared Minds</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Google Fonts: Fredoka for friendly rounded headings, Nunito for readable warm body -->
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Space Mono carries the whole typewritten voice; Archivo sets only the
+       small signature blocks at the foot of each clipping. -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Archivo:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -20,43 +21,38 @@
          SIGNED OUT: SOFT LANDING PAGE
          ======================================================== -->
     <main id="landing-view" class="landing-view">
-      <div class="landing-card">
-        <div class="candle-halo" aria-hidden="true">
-          <span class="candle-icon">🕯️</span>
-          <span class="sparkle s1">✨</span>
-          <span class="sparkle s2">🌸</span>
-        </div>
+      <!-- The landing is one sheet clipped to the desk, typed out. -->
+      <div class="landing-card stock-ruled clip-binder">
+        <span class="landing-masthead">A place to put it down</span>
 
         <h1 class="landing-title">Prayer Board</h1>
+
         <p class="landing-subtitle">
-          A calm, gentle space where people post things they need prayer for, and quietly hold space for one another.
+          People pin the things they are carrying here, and other people quietly
+          hold them. That is the whole of it.
         </p>
 
-        <p class="landing-ethos">
-          No likes. No comments. No follower counts or rankings.<br>
-          Just warm presence and quiet care.
-        </p>
+        <ul class="landing-ethos" aria-label="How this board works">
+          <li>Nothing here is counted in public.</li>
+          <li>There are no comments, and no way to reply.</li>
+          <li>You can post without your name on it.</li>
+        </ul>
 
         <div class="landing-actions">
           <button id="open-auth-btn" class="btn btn-primary btn-lg" type="button">
-            Enter the Board 🕯️
+            Open the board
           </button>
         </div>
 
-        <div class="landing-features" aria-label="Values of Prayer Board">
-          <div class="feature-pill">
-            <span class="pill-emoji">🌱</span>
-            <span>Gentle & Calm</span>
-          </div>
-          <div class="feature-pill">
-            <span class="pill-emoji">🕊️</span>
-            <span>Privacy First</span>
-          </div>
-          <div class="feature-pill">
-            <span class="pill-emoji">🌷</span>
-            <span>Always Kind</span>
-          </div>
-        </div>
+        <span class="landing-footmark">Shared Minds · NYU ITP</span>
+      </div>
+
+      <!-- Two scraps peeking from behind the sheet, to set the collage up front. -->
+      <div class="landing-scrap scrap-a stock-chartreuse" aria-hidden="true">
+        Praying for steady hands tomorrow morning.
+      </div>
+      <div class="landing-scrap scrap-b stock-peri" aria-hidden="true">
+        Grateful. It went better than I let myself hope.
       </div>
     </main>
 
@@ -68,10 +64,9 @@
       <header class="app-header">
         <div class="header-left">
           <div class="brand">
-            <span class="brand-icon">🕯️</span>
+            <span class="brand-icon" aria-hidden="true">🕯️</span>
             <span class="brand-name">Prayer Board</span>
           </div>
-          <span class="header-tagline">hold space for one another</span>
         </div>
 
         <div class="header-right">
@@ -96,42 +91,39 @@
         </div>
       </header>
 
-      <!-- Phase 1 Verification & Confirmation Stage -->
+      <!-- The Board -->
       <main class="board-stage">
-        <section class="phase-notice-card">
-          <div class="notice-badge">
-            <span>✨ Phase 1 Active</span>
-          </div>
-
-          <h2 class="notice-title">Welcome to the Prayer Board, <span id="welcome-name">Friend</span>!</h2>
-          <p class="notice-text">
-            Authentication is verified. Your session is protected, and your profile is synchronized with Firestore at <code class="code-pill">users/{uid}</code>.
+        <div class="board-intro">
+          <h1 class="board-greeting">Hello, <span id="welcome-name">Friend</span></h1>
+          <p class="board-subgreeting">
+            Here is what people are carrying today. Hold what you can.
           </p>
+        </div>
 
-          <div class="user-details-grid">
-            <div class="detail-item">
-              <span class="detail-label">Display Name</span>
-              <span id="detail-name" class="detail-value">—</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Email Account</span>
-              <span id="detail-email" class="detail-value">—</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Firestore User ID</span>
-              <span id="detail-uid" class="detail-value mono">—</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Board Protection</span>
-              <span class="detail-value status-active">● Active & Secure</span>
-            </div>
-          </div>
+        <!-- Masonry board of prayer cards, filled by board.js -->
+        <section id="board-grid" class="board-grid" aria-label="Prayer requests" aria-live="polite"></section>
 
-          <div class="next-step-hint">
-            <span class="hint-icon">🕯️</span>
-            <span>Ready to test! Try signing out and testing both <strong>Email/Password</strong> and <strong>Google Sign-In</strong>. Phase 2 (Masonry Sticky Notes & Candle animation) will render right here next.</span>
-          </div>
-        </section>
+        <!-- Empty state -->
+        <div id="board-empty" class="board-empty is-hidden">
+          <h2 class="empty-title">Nothing is pinned up yet</h2>
+          <p class="empty-text">
+            Share the first request and it will sit here for others to hold.
+          </p>
+          <button class="btn btn-primary" type="button" data-opens-share>Share a request</button>
+        </div>
+
+        <!-- Loading & end-of-board indicators -->
+        <div id="board-loading" class="board-loading is-hidden" role="status">
+          <span class="loading-candle" aria-hidden="true">🕯️</span>
+          <span>Gathering requests...</span>
+        </div>
+
+        <p id="board-end" class="board-end is-hidden">
+          🌙 That's everything for now. Thank you for being here.
+        </p>
+
+        <!-- Infinite scroll trigger -->
+        <div id="scroll-sentinel" aria-hidden="true"></div>
       </main>
     </div>
 
@@ -219,6 +211,62 @@
 
           <button id="auth-submit-btn" class="btn btn-primary btn-block" type="submit">
             Sign In
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         SHARE A REQUEST MODAL
+         ======================================================== -->
+    <div id="share-modal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="share-modal-title">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="modal-icon">✍️</span>
+            <h2 id="share-modal-title" class="modal-title">Share a request</h2>
+          </div>
+          <button id="close-share-btn" class="modal-close" type="button" aria-label="Close dialog">✕</button>
+        </div>
+
+        <p class="modal-blurb">
+          Say as much or as little as you like. People will hold this quietly — there are no comments here.
+        </p>
+
+        <form id="share-form" class="auth-form" novalidate>
+          <div class="form-group">
+            <label for="request-text" class="form-label">What do you need prayer for?</label>
+            <textarea
+              id="request-text"
+              class="form-input form-textarea"
+              rows="5"
+              maxlength="500"
+              placeholder="I could use some peace about..."
+              required
+            ></textarea>
+            <span id="char-count" class="char-count" aria-live="polite">0 / 500</span>
+          </div>
+
+          <div class="form-group">
+            <span class="form-label" id="category-label">Category <span class="label-optional">(optional)</span></span>
+            <div id="category-row" class="category-row" role="radiogroup" aria-labelledby="category-label"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="toggle-row" for="anon-toggle">
+              <input id="anon-toggle" type="checkbox" class="toggle-input" />
+              <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+              <span class="toggle-copy">
+                <span class="toggle-title">Post anonymously 🌫️</span>
+                <span class="form-hint">Your card will show "Someone" instead of your name.</span>
+              </span>
+            </label>
+          </div>
+
+          <div id="share-error" class="error-banner is-hidden" role="alert" aria-live="polite"></div>
+
+          <button id="share-submit-btn" class="btn btn-primary btn-block" type="submit">
+            Place it on the board 🕯️
           </button>
         </form>
       </div>

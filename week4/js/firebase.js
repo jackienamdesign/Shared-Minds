@@ -18,6 +18,20 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// .env is gitignored, so a build run anywhere without it (CI, a fresh clone)
+// inlines `undefined` for every value and every auth call fails with an opaque
+// invalid-api-key. Say so up front instead.
+const missingConfig = Object.entries(firebaseConfig)
+  .filter(([, value]) => !value)
+  .map(([key]) => key);
+
+if (missingConfig.length > 0) {
+  console.error(
+    `[Prayer Board] Missing Firebase config: ${missingConfig.join(', ')}. ` +
+      'Copy .env.example to .env, fill in the values from the Firebase console, then restart the dev server.'
+  );
+}
+
 // Initialize Firebase Core
 export const app = initializeApp(firebaseConfig);
 

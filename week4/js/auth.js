@@ -29,6 +29,12 @@ import { auth, db } from './firebase.js';
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
+// createUserWithEmailAndPassword fires onAuthStateChanged before updateProfile
+// has run, so the listener's ensureUserDoc() would otherwise create users/{uid}
+// with a name derived from the email instead of the one typed at sign up.
+// Signup parks the chosen name here so whichever call lands first uses it.
+let pendingDisplayName = null;
+
 /**
  * Ensures a user document exists in users/{uid} on first sign in
  */
@@ -41,6 +47,7 @@ export async function ensureUserDoc(user, explicitDisplayName) {
 
     const displayName =
       explicitDisplayName ||
+      pendingDisplayName ||
       user.displayName ||
       (user.email ? user.email.split('@')[0] : 'Kind Neighbor');
 
@@ -55,7 +62,14 @@ export async function ensureUserDoc(user, explicitDisplayName) {
       await setDoc(userRef, initialDoc);
       return { id: user.uid, ...initialDoc };
     } else {
-      return { id: user.uid, ...snap.data() };
+      const existing = snap.data();
+      // Repair the name if the auth listener won the race above and stored an
+      // email-derived placeholder before signup supplied the real one.
+      if (explicitDisplayName && existing.displayName !== explicitDisplayName) {
+        await setDoc(userRef, { displayName: explicitDisplayName }, { merge: true });
+        return { id: user.uid, ...existing, displayName: explicitDisplayName };
+      }
+      return { id: user.uid, ...existing };
     }
   } catch (err) {
     console.warn('[Prayer Board] Firestore user doc notice:', err);
@@ -73,14 +87,20 @@ export async function ensureUserDoc(user, explicitDisplayName) {
  */
 export async function signUpWithEmail(email, password, displayName) {
   const cleanName = (displayName || '').trim() || 'Kind Neighbor';
-  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  pendingDisplayName = cleanName;
 
-  // Set Auth display name
-  await updateProfile(cred.user, { displayName: cleanName });
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
 
-  // Create users/{uid} doc in Firestore
-  const profile = await ensureUserDoc(cred.user, cleanName);
-  return { user: cred.user, profile };
+    // Set Auth display name
+    await updateProfile(cred.user, { displayName: cleanName });
+
+    // Create users/{uid} doc in Firestore
+    const profile = await ensureUserDoc(cred.user, cleanName);
+    return { user: cred.user, profile };
+  } finally {
+    pendingDisplayName = null;
+  }
 }
 
 /**

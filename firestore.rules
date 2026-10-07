@@ -1,8 +1,19 @@
 rules_version = '2';
+
+// ============================================================================
+// Prayer Board · Firestore Security Rules
+//
+// Design principle: the app's kindness guarantees are enforced here, not in the
+// UI. A card's prayer count being invisible must mean "the client cannot fetch
+// it", not "the client chooses not to render it".
+// ============================================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // ------------------------------------------------------------------
+    // Helpers
+    // ------------------------------------------------------------------
     function isSignedIn() {
       return request.auth != null;
     }
@@ -11,75 +22,179 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // --- USERS COLLECTION ---
-    // users/{uid} stores account profile and private stats
+    // Reads the parent request to find its author. Costs one extra document
+    // read per rule evaluation, which is why it is only used on the private
+    // subcollections where author-only access is the whole point.
+    function authorOf(requestId) {
+      return get(/databases/$(database)/documents/requests/$(requestId)).data.authorId;
+    }
+
+    function isAuthorOf(requestId) {
+      return isSignedIn() && request.auth.uid == authorOf(requestId);
+    }
+
+    // A prayer may be offered once per request per day.
+    function oneDay() {
+      return duration.value(24, 'h');
+    }
+
+    // ------------------------------------------------------------------
+    // users/{uid} — profile and private lifetime stats
+    // ------------------------------------------------------------------
     match /users/{userId} {
-      // Rule: Users can only read and query their own user document to keep prayer stats private
+      // Rule: a user may read ONLY their own profile doc. This is what keeps
+      // prayersOffered / peoplePrayedFor private — Phase 3 shows your journey
+      // and no one else's, and no query can reach another person's stats.
       allow read: if isOwner(userId);
 
-      // Rule: A user can create or update their own user profile document
+      // Rule: a user may create and update only their own profile. Praying
+      // increments prayersOffered on this doc, and that write is performed by
+      // the praying user against their own doc, so no cross-user write is ever
+      // needed here.
       allow create, update: if isOwner(userId);
 
-      // Rule: No user deletions from the client app
+      // Rule: no client-side account deletion. Removing a user means cleaning
+      // up their requests and prayer records too, which only a trusted server
+      // process should attempt.
       allow delete: if false;
 
-      // users/{uid}/prayedFor/{authorId} tracks which distinct people this user has prayed for
+      // users/{uid}/prayedFor/{authorId} — one doc per distinct person this
+      // user has prayed for. Its document count IS the "different people"
+      // stat, so it must stay private to its owner.
       match /prayedFor/{authorId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // users/{uid}/prayers/{requestId} — the user's own mirror of the prayers
+      // they have offered. Exists so the board can answer "which of these did
+      // I already pray for today?" in one query instead of one read per card.
+      // Private to its owner: it would otherwise reveal who prays for whom.
+      match /prayers/{requestId} {
         allow read, write: if isOwner(userId);
       }
     }
 
-    // --- REQUESTS COLLECTION ---
-    // requests/{requestId} holds the prayer requests posted to the board
+    // ------------------------------------------------------------------
+    // requests/{requestId} — the public prayer card
+    // ------------------------------------------------------------------
     match /requests/{requestId} {
-      // Rule: Only authenticated users can read the prayer board
+      // Rule: the board is readable only by signed-in users. Nothing here is
+      // public to the open internet.
       allow read: if isSignedIn();
 
-      // Rule: Any authenticated user can create a prayer request, provided they are the declared author
+      // Rule: any signed-in user may post, but only as themselves, and the
+      // payload is validated server-side so a modified client cannot write a
+      // card with a forged author, an over-long body, or an unknown category.
       allow create: if isSignedIn()
         && request.resource.data.authorId == request.auth.uid
         && request.resource.data.text is string
-        && request.resource.data.text.size() <= 500;
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 500
+        && request.resource.data.category in
+             ['health', 'family', 'work', 'school', 'grief', 'gratitude', 'other']
+        && request.resource.data.status == 'open'
+        && request.resource.data.isAnonymous is bool
+        && request.resource.data.reportCount == 0
+        && request.resource.data.createdAt == request.time
+        // An anonymous card must carry no name at all. Enforced here rather
+        // than in the UI so "Someone" cannot be unmasked by reading raw data.
+        && (request.resource.data.isAnonymous
+              ? request.resource.data.authorName == ''
+              : request.resource.data.authorName is string);
 
-      // Rule: Only the original author can modify (e.g. mark answered) or delete their request
-      // Exception: Other authenticated users may increment prayerCount via transaction when offering a prayer
-      allow update: if isSignedIn() && (
-        // Author updating their own card
-        isOwner(resource.data.authorId)
-        // OR another user incrementing prayer count or reporting
-        || (
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['prayerCount'])
-          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reportCount'])
-        )
-      );
+      // Rule: only the author may edit their own card, and only the status
+      // field — the text, author and timestamp are immutable once posted.
+      allow update: if isOwner(resource.data.authorId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['open', 'answered'];
 
-      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+      // Rule: only the author may delete their own card.
+      allow delete: if isOwner(resource.data.authorId);
 
-      // --- SUBCOLLECTION: PRAYERS ---
-      // requests/{requestId}/prayers/{prayerUserId} records prayers offered by specific users
+      // ----------------------------------------------------------------
+      // requests/{requestId}/private/stats — author-only prayer count
+      //
+      // The brief lists prayerCount on the request document, but also requires
+      // it be readable only by the author. Firestore grants read access per
+      // document and never per field, so a count on the publicly-readable card
+      // would be readable by every signed-in user. It lives here instead,
+      // where a read rule can genuinely restrict it while others still write.
+      // ----------------------------------------------------------------
+      match /private/{docId} {
+        // Rule: ONLY the author can see how many people prayed. This is the
+        // rule that makes "public cards never show a count" real.
+        allow read: if isAuthorOf(requestId);
+
+        // Rule: creation cannot check the parent's author, because the card and
+        // this doc are written in one atomic batch and get() inside rules sees
+        // only pre-batch state — the parent does not exist yet. Allowing any
+        // signed-in user to create it is safe: a stats doc for a card that
+        // does not exist is unreadable (the read rule's get() finds no author)
+        // and a card that does exist already has one, so create no longer
+        // applies. Capping the opening value at 1 also lets a prayer re-create
+        // the doc if it were ever lost, without letting anyone seed a total.
+        allow create: if isSignedIn()
+          && request.resource.data.keys().hasOnly(['prayerCount'])
+          && request.resource.data.prayerCount <= 1;
+
+        // Rule: anyone signed in may increment the count by exactly one — the
+        // write-without-read asymmetry that lets strangers add to a total they
+        // cannot see. Because increment() is resolved before rules run, the
+        // committed value is checked directly, so a tampered client cannot
+        // jump the count or reset it.
+        allow update: if isSignedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['prayerCount'])
+          && request.resource.data.prayerCount == resource.data.prayerCount + 1;
+
+        // Rule: removed only with the parent card, by its author.
+        allow delete: if isAuthorOf(requestId);
+      }
+
+      // ----------------------------------------------------------------
+      // requests/{requestId}/prayers/{uid} — one doc per person
+      // ----------------------------------------------------------------
       match /prayers/{prayerUserId} {
-        // Rule: Only the author of the request can inspect who prayed for them
-        allow read: if isSignedIn() && isOwner(get(/databases/$(database)/documents/requests/$(requestId)).data.authorId);
+        // Rule: you can read your own prayer record, and the author can read
+        // all of theirs. A third party cannot learn who prayed for a card.
+        allow read: if isOwner(prayerUserId) || isAuthorOf(requestId);
 
-        // Rule: Each user can only write their own prayer doc, and only once per day
-        allow create, update: if isSignedIn()
-          && request.auth.uid == prayerUserId
-          // Validate that the prayer timestamp is recent (within 5 minutes of server time)
-          && request.resource.data.prayedAt is timestamp;
+        // Rule: you may only ever write your own prayer doc, and prayedAt must
+        // be the actual server time — a client cannot backdate a prayer to
+        // escape the cooldown below.
+        allow create: if isOwner(prayerUserId)
+          && request.resource.data.keys().hasOnly(['prayedAt'])
+          && request.resource.data.prayedAt == request.time;
 
+        // Rule: once per request per day. The previous prayedAt must be at
+        // least 24h old, compared against server time on both sides, so the
+        // limit holds no matter what the device clock says.
+        allow update: if isOwner(prayerUserId)
+          && request.resource.data.keys().hasOnly(['prayedAt'])
+          && request.resource.data.prayedAt == request.time
+          && request.time >= resource.data.prayedAt + oneDay();
+
+        // Rule: a prayer cannot be un-offered. Deleting would also be a way to
+        // sidestep the daily limit by clearing the record.
         allow delete: if false;
       }
 
-      // --- SUBCOLLECTION: ENCOURAGEMENTS ---
-      // requests/{requestId}/encouragements/{encId}
+      // ----------------------------------------------------------------
+      // requests/{requestId}/encouragements/{encId} — Phase 4
+      // ----------------------------------------------------------------
       match /encouragements/{encId} {
-        // Rule: Only the author can view the private encouragements sent to them
-        allow read: if isSignedIn() && isOwner(get(/databases/$(database)/documents/requests/$(requestId)).data.authorId);
+        // Rule: only the author reads the encouragements sent to them. They
+        // are private notes of support, never a public comment thread.
+        allow read: if isAuthorOf(requestId);
 
-        // Rule: Any signed-in user can send an encouragement
+        // Rule: any signed-in user may send one, attributed to themselves, and
+        // only from the preset list — there is no free-text channel between
+        // users anywhere in this app.
         allow create: if isSignedIn()
-          && request.resource.data.senderId == request.auth.uid;
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.preset in
+               ['praying_for_you', 'not_alone', 'sending_peace'];
 
+        // Rule: encouragements are immutable once sent.
         allow update, delete: if false;
       }
     }

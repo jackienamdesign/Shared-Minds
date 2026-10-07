@@ -11,6 +11,7 @@ import {
   signInWithGoogle,
   signOutUser,
 } from './auth.js';
+import { initBoard, startBoard, resetBoard, openShare } from './board.js';
 
 // DOM Elements
 const landingView = document.getElementById('landing-view');
@@ -34,9 +35,6 @@ const toastEl = document.getElementById('toast');
 // User details display elements
 const userNameDisplay = document.getElementById('user-name-display');
 const welcomeName = document.getElementById('welcome-name');
-const detailName = document.getElementById('detail-name');
-const detailEmail = document.getElementById('detail-email');
-const detailUid = document.getElementById('detail-uid');
 
 // Action buttons (Phase 2 & 3 triggers)
 const shareRequestBtn = document.getElementById('share-request-btn');
@@ -127,6 +125,17 @@ function formatAuthError(err) {
       return 'Please choose a password with at least 6 characters.';
     case 'auth/popup-closed-by-user':
       return 'Google sign-in was cancelled.';
+    case 'auth/popup-blocked':
+      return 'Your browser blocked the Google sign-in window. Please allow popups for this site and try again.';
+    // Setup-time failures. These are not user mistakes, so the copy names the
+    // exact console fix rather than asking the person to "try again".
+    case 'auth/operation-not-allowed':
+      return 'Google sign-in is not switched on for this Firebase project yet. Enable it under Firebase Console → Authentication → Sign-in method → Google.';
+    case 'auth/unauthorized-domain':
+      return `This domain (${window.location.hostname}) is not an authorised Firebase redirect domain. Add it under Firebase Console → Authentication → Settings → Authorized domains.`;
+    case 'auth/invalid-api-key':
+    case 'auth/api-key-not-valid-please-pass-a-valid-api-key':
+      return 'Firebase config is missing or invalid. Check that .env holds the VITE_FIREBASE_* values and restart the dev server.';
     default:
       return err.message || 'Something went wrong. Please try again.';
   }
@@ -221,14 +230,16 @@ signOutBtn.addEventListener('click', async () => {
   }
 });
 
-// Phase 2 & 3 Gentle Placeholders
-shareRequestBtn?.addEventListener('click', () => {
-  showToast('Phase 1 verified! Phase 2 (Prayer Request Modal) is next.', '✍️');
+// Share a request (Phase 2)
+shareRequestBtn?.addEventListener('click', () => openShare());
+
+// Phase 3 placeholder
+myJourneyBtn?.addEventListener('click', () => {
+  showToast('Phase 3 (My journey stats) is next.', '🌷');
 });
 
-myJourneyBtn?.addEventListener('click', () => {
-  showToast('Phase 1 verified! Phase 3 (My Journey stats) is next.', '🌷');
-});
+// Board listeners are attached once, before any auth state arrives.
+initBoard({ toast: showToast });
 
 // ============================================================================
 // Auth State Observer
@@ -240,22 +251,15 @@ initAuthListener(({ user, profile, isSignedIn }) => {
     boardView.classList.remove('is-hidden');
 
     const name = profile?.displayName || user.displayName || 'Kind Neighbor';
-    const email = user.email || 'Google Account';
-
+    // First name only in the greeting — the full name still shows in the chip.
     userNameDisplay.textContent = name;
-    welcomeName.textContent = name;
-    detailName.textContent = name;
-    detailEmail.textContent = email;
-    detailUid.textContent = user.uid;
+    welcomeName.textContent = name.split(' ')[0];
 
-    console.log('[Prayer Board] Active user authenticated:', {
-      uid: user.uid,
-      displayName: name,
-      email: email,
-    });
+    startBoard(user, profile);
   } else {
     // Show Signed Out Soft Landing
     boardView.classList.add('is-hidden');
     landingView.classList.remove('is-hidden');
+    resetBoard();
   }
 });
