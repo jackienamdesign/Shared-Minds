@@ -1,0 +1,243 @@
+/* ─────────────────────────────────────────────────────────────
+   Words Hold Worlds — the reading page (e-ink look)
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --paper: #ecebe4;      /* warm paper grey */
+  --ink: #5a5a56;        /* soft charcoal, the resting text colour */
+  --ink-hover: #3a3a37;  /* subtle darkening under the pointer */
+  --ink-active: #111;    /* the selected word: solid black */
+  --ink-world: #2c2c29;  /* the world words: darker than the rest */
+
+  /* E-ink panels don't fade, they redraw in a couple of hard steps.
+     Every transition on the page uses this timing instead of an ease. */
+  --eink: 90ms steps(2, end);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--paper);
+}
+
+body {
+  color: var(--ink);
+  font-family: 'Literata', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.6;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Clicking words fast would otherwise paint a blue text-selection
+     highlight, which breaks the monochrome page. */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ── Paper grain ──────────────────────────────────────────────
+   A fixed layer of desaturated SVG fractal noise over the whole
+   screen. It is static (never animates) and ignores the pointer.
+   soft-light keeps the average paper colour where it was and only
+   adds texture. */
+.paper-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0.32;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+/* ── Reading column ─────────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  padding: 16vh 16px 24vh;
+}
+
+.text {
+  position: relative; /* anchors the ink grain layer below */
+  max-width: 34em;
+  margin: 0 auto;
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+/* Kindle-style paragraphs: no gap between them, a first-line indent
+   instead. The opening paragraph sits flush, as in printed books. */
+/* On a phone the column is too narrow for justified text: it opens
+   wide gaps between words. Ragged-right reads more calmly there. */
+@media (max-width: 520px) {
+  .text {
+    text-align: left;
+  }
+}
+
+.text p {
+  margin: 0;
+  text-indent: 1.6em;
+}
+
+.text p:first-child {
+  text-indent: 0;
+}
+
+/* ── Ink grain ────────────────────────────────────────────────
+   Tiny specks in the paper colour, laid over the text. Over blank
+   paper they are invisible; over letters they knock out little
+   gaps, so the ink reads as particles rather than crisp pixels.
+   It scrolls with the text because the grain belongs to the ink.
+   color-interpolation-filters='sRGB' keeps the speck colour exactly
+   the paper colour (the default, linearRGB, comes out lighter). */
+.text::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.7;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='s' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.3' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .925 0 0 0 0 .922 0 0 0 0 .894 9 0 0 0 -4.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+}
+
+/* ── Words ────────────────────────────────────────────────────
+   Every word is its own <span class="word">. Punctuation stays
+   outside the span as plain text, so it is visible but never
+   highlighted or matched. */
+.word {
+  cursor: pointer;
+  transition: color var(--eink);
+}
+
+@media (hover: hover) {
+  .word:hover {
+    color: var(--ink-hover);
+  }
+}
+
+/* The few words that hold a world: darker, and a touch bolder, so they
+   read as doors into the text. A thin stroke thickens the letters without
+   changing their width, so the line never reflows. */
+.word.has-world,
+.word.has-world:hover {
+  color: var(--ink-world);
+  -webkit-text-stroke: 0.022em currentColor;
+}
+
+.word.is-active,
+.word.is-active:hover,
+.word.has-world.is-active:hover {
+  color: var(--ink-active);
+  /* Bolder without reflowing the line: a thin stroke around the letters
+     thickens them, where a heavier font-weight would make the word wider
+     and shift every word after it. */
+  -webkit-text-stroke: 0.05em currentColor;
+}
+
+/* ── Hint ───────────────────────────────────────────────────── */
+.hint {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  margin: 0;
+  padding: 28px 16px 0;
+  text-align: center;
+  font-size: 13px;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  opacity: 0.75;
+  transition: opacity 180ms steps(3, end);
+}
+
+.hint.is-gone {
+  opacity: 0;
+}
+
+/* Status line used only when text.txt is missing or empty. */
+.text .notice {
+  text-indent: 0;
+  text-align: center;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   The zoom (step 2)
+   ───────────────────────────────────────────────────────────── */
+
+/* While a word is selected, scrolling zooms instead of reading.
+   scrollbar-gutter keeps the text from shifting sideways when the
+   scrollbar is hidden. */
+html {
+  scrollbar-gutter: stable;
+}
+
+html.is-zoom-locked,
+html.is-zoom-locked body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* The selected word hands over to its dots: it keeps its space on
+   the page but its ink disappears. */
+.word.is-lifted,
+.word.is-lifted:hover,
+.word.has-world.is-lifted:hover {
+  color: transparent;
+}
+
+/* three.js canvas over the page. Hidden, and click-through, until
+   the zoom starts. Once visible it takes the pointer, so you can't
+   pick another word halfway through a zoom. */
+.stage {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 8;
+  display: block;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.stage.is-visible {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* The dip to black. Opacity is set from zoom.js, frame by frame. */
+.veil {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Once you're inside you can drag to look around. */
+.stage.is-lookable {
+  cursor: grab;
+}
+
+.stage.is-dragging {
+  cursor: grabbing;
+}
+
+/* Fully dark: black ground, no page, no paper grain. */
+html[data-mode='dark'],
+html[data-mode='dark'] body {
+  background: #000;
+}
+
+html[data-mode='dark'] .page,
+html[data-mode='dark'] .hint,
+html[data-mode='dark'] .paper-grain {
+  visibility: hidden;
+}

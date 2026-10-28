@@ -13,6 +13,8 @@ const muted = 'rgba(20, 48, 61, 0.62)';
 const week1Href = `${import.meta.env.BASE_URL}week1/`;
 /** Week 4 Prayer Board runs as its own gentle vanilla JS application. */
 const week4Href = `${import.meta.env.BASE_URL}week4/`;
+/** Words Hold Worlds is its own Vite + three.js project, built into dist/words-hold-worlds. */
+const wordsHref = `${import.meta.env.BASE_URL}words-hold-worlds/`;
 
 function Week1Preview() {
   return (
@@ -158,6 +160,58 @@ function Week4Preview() {
   );
 }
 
+/** Dot positions for the right half of the Words Hold Worlds preview. */
+// A fixed pseudo-random scatter: the same "random" numbers on every render,
+// so the preview never reshuffles. (Classic GLSL-style sine hash.)
+const hash = (n: number) => {
+  const s = Math.sin(n * 12.9898) * 43758.5453;
+  return s - Math.floor(s);
+};
+const WORLD_DOTS = Array.from({ length: 90 }, (_, i) => ({
+  x: hash(i + 1) * 100,
+  y: hash(i + 101) * 100,
+  size: 1 + Math.floor(hash(i + 201) * 2.5),
+  alpha: 0.3 + hash(i + 301) * 0.65,
+}));
+
+function WordsPreview() {
+  return (
+    <div className="relative w-full h-full overflow-hidden" style={{ display: 'flex' }}>
+      {/* Left: the e-ink page, a few lines of grey text with one word picked out */}
+      <div style={{ flex: 1, background: '#ecebe4', padding: '34px 18px 0 22px' }}>
+        {[92, 100, 84, 100, 70].map((w, i) => (
+          <div key={i} style={{ display: 'flex', gap: 5, marginBottom: 11 }}>
+            <div style={{ width: `${w * 0.42}%`, height: 5, borderRadius: 1, background: 'rgba(90, 90, 86, 0.5)' }} />
+            {i === 2 ? (
+              <span style={{ fontFamily: 'Georgia, serif', fontSize: 11, lineHeight: '5px', color: '#111' }}>bread</span>
+            ) : (
+              <div style={{ width: `${w * 0.36}%`, height: 5, borderRadius: 1, background: 'rgba(90, 90, 86, 0.5)' }} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Right: past the word, a dark field of white points */}
+      <div style={{ flex: 1, position: 'relative', background: '#050505' }}>
+        {WORLD_DOTS.map((d, i) => (
+          <span
+            key={i}
+            style={{
+              position: 'absolute',
+              left: `${d.x}%`,
+              top: `${d.y}%`,
+              width: d.size,
+              height: d.size,
+              borderRadius: '50%',
+              background: `rgba(255, 255, 255, ${d.alpha})`,
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface PieceProps {
   week: string;
   title: string;
@@ -273,6 +327,13 @@ export default function Landing() {
             blurb="A cozy, gentle social board where people post things they need prayer for and hold space for others. Calm, kind, and strictly non-competitive."
             preview={<Week4Preview />}
             href={week4Href}
+          />
+          <Piece
+            week="3D"
+            title="Words Hold Worlds"
+            blurb="Every word holds a world of its own. Pick a word on a quiet e-ink page, scroll into it, and watch it dissolve into dots that open into a dark 3D world."
+            preview={<WordsPreview />}
+            href={wordsHref}
           />
         </div>
 

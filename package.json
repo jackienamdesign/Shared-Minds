@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run build:words",
+    "build:words": "npm --prefix words-hold-worlds run build -- --outDir ../dist/words-hold-worlds --emptyOutDir",
     "preview": "vite preview",
     "calibrate": "node calibrate.mjs"
   },
