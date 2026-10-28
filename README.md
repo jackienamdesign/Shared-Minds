@@ -8,6 +8,7 @@ assignment, with a landing page at the root that lets you pick between them.
 | Weeks 01–02 | Stream of Consciousness | `public/week1/` | `/week1/` |
 | Week 03 | Interactive Photobooth | `src/week3/` + `public/week3/` | `/#/photobooth` |
 | Week 04 | Shared Worlds: Storyboards | `src/week4/` | `/#/storyworlds` |
+| 3D week | Words Hold Worlds | `words-hold-worlds/` (own Vite + three.js project) | `/words-hold-worlds/` |
 
 Live at **https://jackienamdesign.github.io/Shared-Minds/**
 
@@ -20,6 +21,16 @@ npm run dev      # http://localhost:5173/Shared-Minds/
 
 The dev server uses the same `/Shared-Minds/` base path as production, so a
 broken asset path shows up locally instead of only after deploying.
+
+Words Hold Worlds is a separate project with its own dependencies, so it runs
+from its own folder (the root `npm run build` still builds it into
+`dist/words-hold-worlds/`):
+
+```bash
+cd words-hold-worlds
+npm install
+npm run dev      # http://localhost:5173/
+```
 
 ```bash
 npm run build    # -> dist/
@@ -131,6 +142,71 @@ harness is not published with the site.
 Newest first. One `###` block per working session — date, a short name for what
 it was about, then what changed in plain terms. Keep "still open" notes at the
 bottom of an entry; they are the fastest way back in next time.
+
+### 2026-10-28 — Words Hold Worlds (3D week), steps 1–3
+
+A quiet e-ink reading page of one book excerpt. Pick one of the darker words,
+scroll, and the word breaks into dots, the page dips to black, and the camera
+pushes through the letters into a dark 3D point-cloud world of that moment.
+Full spec and step checklist: `words-hold-worlds/PLAN.md`.
+
+**Done:**
+- **Reading page** (`text-layer.js`, `style.css`): Literata on warm paper
+  grey, paper grain, grainy "e-ink" letters, first-line indents. Every word is
+  its own span. The selected word turns black and bolder (a text stroke, so
+  the line never reflows).
+- **Seven world words**, darker and slightly bolder than the rest, one marked
+  occurrence each, cold to hope: rain, puddle, glow, bread, pig, fluffy,
+  dandelion. Each has a `scene` brief in `src/worlds.json`. A hint walks a
+  first-time reader in ("select one, then scroll" → "now scroll" → gone).
+- **The zoom** (`zoom.js`, `word-dots.js`): once a word is selected, scroll
+  drives one 0→1 progress value. 0–0.5: the word grows and breaks into black
+  dots. 0.34–0.6: a smooth dip to black, the dots come back white. 0.5–0.75:
+  the camera pushes through the letters. 0.75–1: the world's camera tour,
+  also carried by scroll. Scrolling back, or Escape, reverses it all and
+  deselects.
+- **Bread world** (`world.js`, `placeholders.js`): the girl under the apple
+  tree, the pig pen and pig, two loaves mid-arc with a faint trail, muddy
+  ground, dust. Placeholder figures are built from simple shapes covered in
+  points with a soft haze. About 90k points, 60fps.
+- **Look around** (`look.js`): drag with the mouse once you're through the
+  word. The horizon stays level; scrolling back out fades the drag away.
+- Added to the landing page and the deploy build.
+
+**Changed along the way (on purpose):** the e-ink flash became a smooth dip
+to black; the timed camera tour became scroll-driven, because the camera
+turning by itself made scrolling back hard to follow; per-word Gemini worlds
+(step 5) are on hold in favour of the seven world words.
+
+**Still open — your to-dos before or during next session:**
+- [ ] Copy the proxy client from the Pingu project to
+      `words-hold-worlds/reference/pingu-proxy.js` (probably
+      `src/week3/replicate.ts`). Needed before any AI model code.
+- [ ] Make one shaded reference image per figure and put them in
+      `words-hold-worlds/public/worlds/<word>/` (e.g. `bread/girl.png`,
+      `bread/pig.png`, `bread/loaf.png`, `bread/tree.png`). Needed for step 6.
+- [ ] `public/text.txt` has no blank lines between paragraphs, so the page
+      shows one long paragraph. Add blank lines where paragraphs should break.
+- [ ] Possible typo in `text.txt`: "my bands empty of any hope" (hands?).
+- [ ] The landing card says "3D" instead of a week number. Tell Claude the
+      number, or edit `week=` in `src/Landing.tsx`.
+- [ ] Review the six scene briefs in `src/worlds.json` and change any you
+      want before they're built.
+- [ ] Merge the `words-hold-worlds` branch into `main` to put it on the live
+      site. Note this publishes the excerpt in `text.txt`.
+
+**Next session — paste this to Claude to pick up where we left off:**
+
+> We're continuing Words Hold Worlds in `words-hold-worlds/`. Read
+> `words-hold-worlds/PLAN.md` first, then the 2026-10-28 changelog entry in
+> the root README. Steps 1–3 are done. Next is step 4: build placeholder
+> point-cloud worlds for the other six world words (rain, puddle, glow, pig,
+> fluffy, dandelion), following each `scene` brief in `src/worlds.json` and
+> the bread world's approach in `src/placeholders.js`. Add the motion types
+> (falling for rain, floating for dandelion, drifting for glow and fluffy).
+> Each world needs a `cameraPath` and `lookPath` that the scroll carries you
+> along. Start with rain and dandelion, and stop after each world so I can
+> test it. Never write or paraphrase book text yourself.
 
 ### 2026-10-06 — latency optimization & week 4 multi-user storyboards
 

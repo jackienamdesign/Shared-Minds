@@ -1,0 +1,75 @@
+{
+  "rain": {
+    "source": "authored",
+    "occurrence": 1,
+    "scene": "Cold. Dense sheets of white dots falling all around you, a small figure in an oversized hunting jacket walking through them, shoulders hunched.",
+    "motion": "falling",
+    "figures": []
+  },
+  "puddle": {
+    "source": "authored",
+    "occurrence": 1,
+    "scene": "Defeat. The camera at the waterline of a mud puddle. A bundle of baby clothes half sunk in it, rings of dots spreading out from where it fell, and her wavering reflection upside down in the water.",
+    "motion": "still",
+    "figures": []
+  },
+  "glow": {
+    "source": "authored",
+    "occurrence": 1,
+    "scene": "Longing. From the dark lane, an open kitchen door: the bakery's ovens inside, and a fan of dense bright dots spilling out across the mud, with rain falling through the light.",
+    "motion": "drifting",
+    "figures": []
+  },
+  "bread": {
+    "source": "authored",
+    "occurrence": 2,
+    "scene": "Kindness. A girl slumped at the base of an apple tree, a pig pen and pig beside her, two loaves arcing through the air toward her. The burned crusts are the densest dots in the scene.",
+    "motion": "still",
+    "cameraPath": [
+      [3.2, 0.25, 2.6],
+      [3.35, 0.5, 3.1],
+      [2.8, 0.95, 3.55],
+      [1.4, 1.2, 3.35]
+    ],
+    "lookPath": [
+      [3.2, 0.25, 1.1],
+      [3.0, 0.32, 0.8],
+      [1.7, 0.55, 0.35],
+      [0.05, 0.55, 0.0]
+    ],
+    "figures": [
+      { "id": "girl", "model": "/worlds/bread/girl.glb", "placeholder": "girl", "position": [0, 0, 0], "rotation": [0, 0.38, 0], "scale": 1, "density": 26000 },
+      { "id": "tree", "model": "/worlds/bread/tree.glb", "placeholder": "appleTree", "position": [-0.16, 0, -0.42], "rotation": [0, 0.6, 0], "scale": 1, "density": 16000 },
+      { "id": "pen", "placeholder": "pigPen", "position": [3.1, 0, 0.5], "rotation": [0, 0, 0], "scale": 1, "density": 9000 },
+      { "id": "pig", "model": "/worlds/bread/pig.glb", "placeholder": "pig", "position": [2.95, 0, 1.0], "rotation": [0, 3.14, 0], "scale": 1, "density": 12000 },
+      { "id": "loaf-1", "model": "/worlds/bread/loaf.glb", "placeholder": "loaf", "position": [1.13, 0.74, 0.62], "rotation": [0.35, 0.9, 0.4], "scale": 1, "density": 9000 },
+      { "id": "loaf-2", "model": "/worlds/bread/loaf.glb", "placeholder": "loaf", "position": [1.68, 0.99, 0.74], "rotation": [-0.2, 0.5, -0.3], "scale": 1, "density": 9000 },
+      { "id": "arc", "placeholder": "arc", "position": [0, 0, 0], "density": 260, "from": [2.4, 1.0, 0.9], "to": [0.35, 0.05, 0.45], "height": 1.4 }
+    ],
+    "environment": {
+      "ground": { "radius": 9, "density": 18000 },
+      "dust": { "size": [16, 4, 16], "density": 2500 }
+    }
+  },
+  "pig": {
+    "source": "authored",
+    "occurrence": 2,
+    "scene": "Cruelty and courage. Close at the trough: chunks of burned bread tumbling into it and the pig eating, while behind the fence a boy, back turned, tears at the loaves.",
+    "motion": "still",
+    "figures": []
+  },
+  "fluffy": {
+    "source": "authored",
+    "occurrence": 1,
+    "scene": "Relief. Lying on your back on the school yard grass, looking up: soft, slow clouds of dots drifting overhead in warm air.",
+    "motion": "drifting",
+    "figures": []
+  },
+  "dandelion": {
+    "source": "authored",
+    "occurrence": 1,
+    "scene": "Hope. A single dandelion head close up, its seeds lifting off one by one and drifting past and around you, up into the dark.",
+    "motion": "floating",
+    "figures": []
+  }
+}

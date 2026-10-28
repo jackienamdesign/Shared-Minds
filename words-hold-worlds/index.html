@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="paper">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Words Hold Worlds</title>
+    <meta name="description" content="Every word holds a world of its own. Select a word, then scroll." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&display=swap"
+    />
+  </head>
+  <body>
+    <!-- Guides a first-time reader in, then disappears (see main.js). -->
+    <p id="hint" class="hint">the darker words hold worlds. select one, then scroll.</p>
+
+    <!-- The reading page. Paragraphs from public/text.txt are rendered in here. -->
+    <main id="page" class="page">
+      <article id="text" class="text" aria-live="polite"></article>
+    </main>
+
+    <!-- The dip to black: a dark veil that rises over the paper as you zoom. -->
+    <div id="veil" class="veil" aria-hidden="true"></div>
+
+    <!-- three.js draws the word's dots and the 3D worlds here, over the page. -->
+    <canvas id="stage" class="stage" aria-hidden="true"></canvas>
+
+    <!-- Static paper grain over the whole screen (see style.css). -->
+    <div class="paper-grain" aria-hidden="true"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
