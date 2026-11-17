@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Between Words · Shared Minds</title>
+  <meta name="description" content="The worlds between seven words, found by blending their embeddings in a text-to-image model run in Colab." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <a href="../" class="back-link">&larr; All pieces</a>
+  <div class="paper-grain" aria-hidden="true"></div>
+
+  <main class="piece">
+    <header class="masthead">
+      <h1>Between Words</h1>
+      <p class="lede">
+        Seven words, each holding a world. Drag along the line to walk through
+        the worlds that live between them.
+      </p>
+    </header>
+
+    <figure class="plate">
+      <canvas id="plate" width="512" height="512" aria-label="The world at this point between the words"></canvas>
+      <p id="plate-note" class="plate-note" hidden></p>
+    </figure>
+
+    <div class="scrubber">
+      <div id="words" class="words"></div>
+      <input id="position" type="range" min="0" max="6" step="any" value="0" aria-label="Position between the words" />
+    </div>
+    <p id="caption" class="caption" aria-live="polite"></p>
+
+    <details id="live" class="live">
+      <summary>Run it live from Colab</summary>
+      <p>
+        Run section 4 of the notebook, then paste the ngrok address it prints.
+        Live, you can blend any two words, not only these seven.
+      </p>
+      <form id="live-form" class="live-form">
+        <input id="live-url" type="url" placeholder="https://….ngrok-free.app" required />
+        <button type="submit">Connect</button>
+      </form>
+      <div id="live-words" class="live-words" hidden>
+        <input id="word-a" type="text" aria-label="First word" />
+        <span>to</span>
+        <input id="word-b" type="text" aria-label="Second word" />
+        <button id="disconnect" type="button">Back to the rendered frames</button>
+      </div>
+      <p id="live-status" class="live-status" aria-live="polite"></p>
+    </details>
+
+    <p class="source">
+      <a href="https://colab.research.google.com/github/jackienamdesign/Shared-Minds/blob/main/between-words/between_words.ipynb">Open the notebook in Colab</a>
+    </p>
+  </main>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

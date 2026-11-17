@@ -15,6 +15,8 @@ const week1Href = `${import.meta.env.BASE_URL}week1/`;
 const week4Href = `${import.meta.env.BASE_URL}week4/`;
 /** Words Hold Worlds is its own Vite + three.js project, built into dist/words-hold-worlds. */
 const wordsHref = `${import.meta.env.BASE_URL}words-hold-worlds/`;
+/** Between Words is a vanilla page bundled from between-words/. */
+const betweenHref = `${import.meta.env.BASE_URL}between-words/`;
 
 function Week1Preview() {
   return (
@@ -212,6 +214,51 @@ function WordsPreview() {
   );
 }
 
+/** Five plates on the paper, one shape easing into the next: the in-between frames. */
+function BetweenPreview() {
+  return (
+    <div
+      className="relative w-full h-full overflow-hidden"
+      style={{ background: '#ecebe4', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}
+    >
+      <div style={{ display: 'flex', gap: 6 }}>
+        {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+          <div key={t} style={{ position: 'relative', width: 52, height: 52, background: '#050505', overflow: 'hidden' }}>
+            {/* Falling rain fading out as a dandelion head grows in */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                opacity: 1 - t,
+                backgroundImage: 'repeating-linear-gradient(100deg, rgba(255,255,255,0.55) 0 1px, transparent 1px 7px)',
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '46%',
+                width: 8 + t * 28,
+                height: 8 + t * 28,
+                transform: 'translate(-50%, -50%)',
+                borderRadius: '50%',
+                opacity: t,
+                background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0 2px, rgba(255,255,255,0.35) 3px, transparent 70%)',
+                border: '1px dotted rgba(255,255,255,0.7)',
+              }}
+            />
+          </div>
+        ))}
+      </div>
+      <div style={{ width: 284, display: 'flex', justifyContent: 'space-between', fontFamily: 'Georgia, serif', fontSize: 11, color: '#5a5a56' }}>
+        <span>rain</span>
+        <span style={{ fontStyle: 'italic', opacity: 0.7 }}>between</span>
+        <span>dandelion</span>
+      </div>
+    </div>
+  );
+}
+
 interface PieceProps {
   week: string;
   title: string;
@@ -334,6 +381,13 @@ export default function Landing() {
             blurb="Every word holds a world of its own. Pick a word on a quiet e-ink page, scroll into it, and watch it dissolve into dots that open into a dark 3D world."
             preview={<WordsPreview />}
             href={wordsHref}
+          />
+          <Piece
+            week="Notebooks"
+            title="Between Words"
+            blurb="The worlds between words. A Colab notebook blends seven words inside an image model, and you walk the space between them, from rain to dandelion."
+            preview={<BetweenPreview />}
+            href={betweenHref}
           />
         </div>
 
