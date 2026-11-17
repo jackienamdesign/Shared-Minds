@@ -9,6 +9,7 @@ assignment, with a landing page at the root that lets you pick between them.
 | Week 03 | Interactive Photobooth | `src/week3/` + `public/week3/` | `/#/photobooth` |
 | Week 04 | Shared Worlds: Storyboards | `src/week4/` | `/#/storyworlds` |
 | 3D week | Words Hold Worlds | `words-hold-worlds/` (own Vite + three.js project) | `/words-hold-worlds/` |
+| Notebooks week | Between Words | `between-words/` (page + Colab notebook) + `public/between-words/frames/` | `/between-words/` |
 
 Live at **https://jackienamdesign.github.io/Shared-Minds/**
 
@@ -142,6 +143,65 @@ harness is not published with the site.
 Newest first. One `###` block per working session — date, a short name for what
 it was about, then what changed in plain terms. Keep "still open" notes at the
 bottom of an entry; they are the fastest way back in next time.
+
+### 2026-11-17 — Between Words (notebooks week)
+
+The assignment: go one level below Replicate, into a Python notebook on Colab,
+and do something an API call can't. Here that is **interpolation**: blending
+two prompts' embeddings inside Stable Diffusion to draw the worlds *between*
+the seven world words from Words Hold Worlds (rain → puddle → glow → bread →
+pig → fluffy → dandelion).
+
+**Done:**
+- **The notebook** (`between-words/between_words.ipynb`): loads `sd-turbo` on
+  a free T4, turns each word's scene brief (from `words-hold-worlds/src/worlds.json`)
+  into an embedding, and slerps between neighbouring words, always starting
+  from the same noise so frames morph and don't jump. Section 2 shows strips
+  inline. Section 3 renders the whole chain (139 frames + `manifest.json`)
+  and downloads a zip. Section 4 serves `/frame?a=&b=&t=` with FastAPI,
+  tunnelled out through ngrok, which makes it a small Replicate of your own.
+- **The page** (`between-words/`): one black plate on the e-ink paper, the
+  seven words on a line beneath it. Drag the line, drag or scroll on the
+  plate, use the arrow keys (one frame) or PageUp/PageDown (one word), or
+  click a word. Neighbouring frames crossfade, so scrubbing is smooth.
+- **Live mode**: paste the ngrok address under "Run it live from Colab", or
+  open the link the notebook prints (`?live=…`). Live, the two words are
+  editable, so you can blend any two words. When the notebook stops, "Back to
+  the rendered frames" returns to the committed frames.
+- Added to the landing page and the build (`vite.config.ts`).
+- Tested with placeholder frames and a mock server: scrubbing, keys, word
+  clicks, live connect, word edits, disconnect, a bad URL, and phone width.
+  The notebook ran end to end on a Colab T4 (sections 1–3); section 4 (live)
+  hasn't been run yet.
+
+**Still open — your to-dos:**
+- [x] Ran sections 1–3 in Colab and committed the 139 frames to
+      `public/between-words/frames/`.
+- [ ] Make an ngrok account (copy the authtoken). Hugging Face wasn't needed:
+      sd-turbo downloads without a login.
+- [ ] Look at the frames again. The middle of the chain (puddle → glow →
+      bread → pig) morphs well. Two weak spots: the middle of rain → puddle,
+      and everything around fluffy, fall apart into plain dot texture (the
+      style line takes over when the scene has no solid subject). And the
+      puddle world draws a baby in the mud, not a bundle of baby clothes.
+      Fixes to try in the notebook only: more concrete prompts for fluffy and
+      puddle, a softer `STYLE`, or another `SEED`. Then re-render.
+- [ ] Experiments to make it yours: swap `slerp` for `torch.lerp` and compare
+      the middle frames; blend between two seeds with one prompt; write a
+      short note on the page about what you saw.
+- [ ] For live mode, add `NGROK_AUTHTOKEN` in Colab Secrets and run section 4.
+- [ ] The landing card says "Notebooks" in place of a week number. Edit
+      `week=` in `src/Landing.tsx`.
+- [ ] Merge to `main` to publish. This branch is built on `words-hold-worlds`,
+      so merging it publishes that piece too.
+
+**Next session — paste this to Claude to pick up where we left off:**
+
+> We're continuing Between Words in `between-words/`. Read the 2026-11-17
+> changelog entry in the root README first. The notebook is
+> `between-words/between_words.ipynb` and the page is `between-words/main.js`.
+> I've run the notebook in Colab and [describe what happened / what the
+> frames look like]. Help me with [next thing].
 
 ### 2026-10-28 — Words Hold Worlds (3D week), steps 1–3
 

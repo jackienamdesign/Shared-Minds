@@ -29,11 +29,13 @@ export default defineConfig({
       input: {
         main: path.resolve(import.meta.dirname, 'index.html'),
         week4: path.resolve(import.meta.dirname, 'week4/index.html'),
+        betweenWords: path.resolve(import.meta.dirname, 'between-words/index.html'),
       },
     },
   },
   // public/ is copied to the build verbatim. Week 1 lives in public/week1 — it
   // resolves React through an import map at runtime and must not be bundled.
   // Week 3's images are in public/week3/assets; its React source is bundled
-  // from src/week3.
+  // from src/week3. Between Words is the same split: its page is bundled from
+  // between-words/, its frames (rendered in Colab) are in public/between-words.
 })

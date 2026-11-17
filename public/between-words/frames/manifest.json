@@ -1,0 +1,17 @@
+{
+  "words": [
+    "rain",
+    "puddle",
+    "glow",
+    "bread",
+    "pig",
+    "fluffy",
+    "dandelion"
+  ],
+  "framesPerPair": 24,
+  "count": 139,
+  "size": 512,
+  "model": "stabilityai/sd-turbo",
+  "seed": 7,
+  "style": "Monochrome pointillism, white points of light on black, soft fog, film grain. "
+}

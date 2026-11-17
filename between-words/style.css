@@ -1,0 +1,322 @@
+/* ─────────────────────────────────────────────────────────────
+   Between Words — one plate on an e-ink page, and a line of words
+   to scrub along. Shares its paper, ink and grain with Words Hold
+   Worlds so the two read as one book.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --paper: #ecebe4;
+  --ink: #5a5a56;
+  --ink-faint: #8a8a84;
+  --ink-active: #111;
+  --eink: 90ms steps(2, end);
+  --plate: min(512px, calc(100vw - 32px));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--paper);
+}
+
+body {
+  color: var(--ink);
+  font-family: 'Literata', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.6;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+.paper-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0.32;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+.back-link {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 20;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--ink-active);
+}
+
+/* ── Page ───────────────────────────────────────────────────── */
+.piece {
+  width: var(--plate);
+  margin: 0 auto;
+  padding: 11vh 0 14vh;
+}
+
+.masthead h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink-active);
+}
+
+.masthead .lede {
+  margin: 8px 0 36px;
+  font-size: 16px;
+}
+
+/* ── The plate ──────────────────────────────────────────────── */
+.plate {
+  position: relative;
+  margin: 0;
+  width: var(--plate);
+  aspect-ratio: 1;
+  background: #050505;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08), 0 18px 40px -24px rgba(0, 0, 0, 0.45);
+}
+
+.plate canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* The prompts ask for monochrome; this makes sure of it. */
+  filter: grayscale(1);
+  cursor: ew-resize;
+  touch-action: pan-y;
+}
+
+.plate-note {
+  position: absolute;
+  inset: auto 0 0;
+  margin: 0;
+  padding: 0 24px 22px;
+  font-size: 14px;
+  font-style: italic;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* ── The line of words ──────────────────────────────────────── */
+.scrubber {
+  position: relative;
+  margin-top: 26px;
+  /* Inset so the end words can sit centred on their points, like the rest. */
+  padding: 0 38px;
+}
+
+.words {
+  position: relative;
+  height: 28px;
+}
+
+.word {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  white-space: nowrap;
+  cursor: pointer;
+  /* --near runs 0 → 1 as the position closes in on this word. */
+  color: color-mix(in srgb, var(--ink-active) calc(var(--near, 0) * 100%), var(--ink-faint));
+  -webkit-text-stroke: calc(var(--near, 0) * 0.35px) currentColor;
+}
+
+.word:hover,
+.word:focus-visible {
+  color: var(--ink-active);
+}
+
+/* A thin rule with a small square marker, drawn over a native range
+   input so the keyboard and screen readers still get a real slider. */
+.scrubber input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  background: none;
+  cursor: ew-resize;
+}
+
+.scrubber input[type='range']::-webkit-slider-runnable-track {
+  height: 1px;
+  background: var(--ink);
+}
+
+.scrubber input[type='range']::-moz-range-track {
+  height: 1px;
+  background: var(--ink);
+}
+
+.scrubber input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 9px;
+  height: 9px;
+  margin-top: -4px;
+  border: 0;
+  border-radius: 0;
+  background: var(--ink-active);
+}
+
+.scrubber input[type='range']::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border: 0;
+  border-radius: 0;
+  background: var(--ink-active);
+}
+
+.scrubber input[type='range']:focus-visible {
+  outline: 1px dotted var(--ink-active);
+  outline-offset: 4px;
+}
+
+.caption {
+  min-height: 1.6em;
+  margin: 10px 0 0;
+  font-size: 14px;
+  font-style: italic;
+  text-align: center;
+}
+
+.caption b {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--ink-active);
+}
+
+/* ── Live from Colab ────────────────────────────────────────── */
+.live {
+  margin-top: 56px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(90, 90, 86, 0.3);
+  font-size: 15px;
+}
+
+.live summary {
+  cursor: pointer;
+  font-style: italic;
+  color: var(--ink);
+}
+
+.live summary:hover {
+  color: var(--ink-active);
+}
+
+.live p {
+  margin: 12px 0 0;
+}
+
+.live-form,
+.live-words {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.live input[type='url'],
+.live input[type='text'] {
+  flex: 1 1 140px;
+  min-width: 0;
+  padding: 6px 0;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink-active);
+}
+
+.live input:focus {
+  outline: none;
+  border-bottom-color: var(--ink-active);
+}
+
+.live button {
+  padding: 6px 14px;
+  border: 1px solid var(--ink-active);
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink-active);
+  cursor: pointer;
+  transition: background var(--eink), color var(--eink);
+}
+
+.live button:hover {
+  background: var(--ink-active);
+  color: var(--paper);
+}
+
+.live-words #disconnect {
+  flex-basis: 100%;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  font-style: italic;
+  color: var(--ink);
+}
+
+.live-words #disconnect:hover {
+  background: none;
+  color: var(--ink-active);
+}
+
+.live-status {
+  min-height: 1.6em;
+  font-size: 14px;
+  font-style: italic;
+}
+
+.source {
+  margin: 28px 0 0;
+  font-size: 14px;
+  font-style: italic;
+}
+
+.source a {
+  color: var(--ink);
+  text-underline-offset: 3px;
+}
+
+.source a:hover {
+  color: var(--ink-active);
+}
+
+/* Seven words don't fit across a phone. Far words shrink to a tick
+   and the caption names where you are. */
+@media (max-width: 560px) {
+  .back-link {
+    top: 14px;
+    left: 16px;
+  }
+
+  .word.is-far {
+    font-size: 0;
+  }
+
+  .word.is-far::before {
+    content: '·';
+    font-size: 15px;
+  }
+}
