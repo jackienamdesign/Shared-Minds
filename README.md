@@ -144,6 +144,19 @@ Newest first. One `###` block per working session — date, a short name for wha
 it was about, then what changed in plain terms. Keep "still open" notes at the
 bottom of an entry; they are the fastest way back in next time.
 
+### 2026-11-18 — Between Words: localtunnel in place of ngrok
+
+- Section 4 of the notebook now opens its public address with
+  [localtunnel](https://github.com/localtunnel/localtunnel) (`npx localtunnel`,
+  Node is already on Colab) in place of ngrok. No account, no authtoken, no
+  Colab secret. Addresses look like `https://….loca.lt`.
+- The page sends `bypass-tunnel-reminder` in place of
+  `ngrok-skip-browser-warning`. Without it, localtunnel answers browsers with
+  a reminder page (status 511). Checked against a real loca.lt tunnel: the
+  CORS preflight reaches the server, and the request with the header returns
+  200 with the CORS headers.
+- Still not run end to end on Colab.
+
 ### 2026-11-17 — Between Words (notebooks week)
 
 The assignment: go one level below Replicate, into a Python notebook on Colab,
@@ -159,12 +172,12 @@ pig → fluffy → dandelion).
   from the same noise so frames morph and don't jump. Section 2 shows strips
   inline. Section 3 renders the whole chain (139 frames + `manifest.json`)
   and downloads a zip. Section 4 serves `/frame?a=&b=&t=` with FastAPI,
-  tunnelled out through ngrok, which makes it a small Replicate of your own.
+  tunnelled out through localtunnel, which makes it a small Replicate of your own.
 - **The page** (`between-words/`): one black plate on the e-ink paper, the
   seven words on a line beneath it. Drag the line, drag or scroll on the
   plate, use the arrow keys (one frame) or PageUp/PageDown (one word), or
   click a word. Neighbouring frames crossfade, so scrubbing is smooth.
-- **Live mode**: paste the ngrok address under "Run it live from Colab", or
+- **Live mode**: paste the localtunnel address under "Run it live from Colab", or
   open the link the notebook prints (`?live=…`). Live, the two words are
   editable, so you can blend any two words. When the notebook stops, "Back to
   the rendered frames" returns to the committed frames.
@@ -177,8 +190,8 @@ pig → fluffy → dandelion).
 **Still open — your to-dos:**
 - [x] Ran sections 1–3 in Colab and committed the 139 frames to
       `public/between-words/frames/`.
-- [ ] Make an ngrok account (copy the authtoken). Hugging Face wasn't needed:
-      sd-turbo downloads without a login.
+- [x] ~~Make an ngrok account~~ No accounts needed: section 4 uses
+      localtunnel now, and sd-turbo downloads without a Hugging Face login.
 - [ ] Look at the frames again. The middle of the chain (puddle → glow →
       bread → pig) morphs well. Two weak spots: the middle of rain → puddle,
       and everything around fluffy, fall apart into plain dot texture (the
@@ -189,7 +202,7 @@ pig → fluffy → dandelion).
 - [ ] Experiments to make it yours: swap `slerp` for `torch.lerp` and compare
       the middle frames; blend between two seeds with one prompt; write a
       short note on the page about what you saw.
-- [ ] For live mode, add `NGROK_AUTHTOKEN` in Colab Secrets and run section 4.
+- [ ] For live mode, run section 4 (no secrets or sign-up needed).
 - [ ] The landing card says "Notebooks" in place of a week number. Edit
       `week=` in `src/Landing.tsx`.
 - [ ] Merge to `main` to publish. This branch is built on `words-hold-worlds`,

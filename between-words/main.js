@@ -4,7 +4,7 @@
  * Two sources feed the one plate:
  * - **Frames**: rendered ahead of time by section 3 of between_words.ipynb and
  *   committed to public/between-words/frames/. Always available.
- * - **Live**: section 4 of the notebook, served from Colab through ngrok. Only
+ * - **Live**: section 4 of the notebook, served from Colab through localtunnel. Only
  *   up while the notebook runs, but takes any two words.
  *
  * Either way the page holds a chain of words and one position along it:
@@ -19,8 +19,8 @@ const DEFAULT_WORDS = ['rain', 'puddle', 'glow', 'bread', 'pig', 'fluffy', 'dand
 /** Live mode asks for t in steps of this size, so scrubbing back hits the cache. */
 const LIVE_STEP = 0.02;
 
-/** Free ngrok tunnels answer browsers with a warning page unless asked not to. */
-const NGROK_HEADERS = { 'ngrok-skip-browser-warning': 'true' };
+/** localtunnel answers browsers with a reminder page unless asked not to. */
+const TUNNEL_HEADERS = { 'bypass-tunnel-reminder': 'true' };
 
 const canvas = document.getElementById('plate');
 const ctx = canvas.getContext('2d');
@@ -182,7 +182,7 @@ async function connect(url) {
   setStatus('Connecting…');
   try {
     const response = await fetch(`${url}/health`, {
-      headers: NGROK_HEADERS,
+      headers: TUNNEL_HEADERS,
       signal: AbortSignal.timeout(10000),
     });
     if (!response.ok) throw new Error(`the server answered ${response.status}`);
@@ -251,7 +251,7 @@ async function fetchLive() {
     live.wanted = null;
     const params = new URLSearchParams({ a, b, t: t.toFixed(2) });
     try {
-      const response = await fetch(`${live.url}/frame?${params}`, { headers: NGROK_HEADERS });
+      const response = await fetch(`${live.url}/frame?${params}`, { headers: TUNNEL_HEADERS });
       if (!response.ok) throw new Error(String(response.status));
       const bitmap = await createImageBitmap(await response.blob());
       live.cache.set(key, bitmap);
@@ -356,7 +356,7 @@ ctx.fillStyle = '#050505';
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 setWords(DEFAULT_WORDS);
 
-// The notebook prints a link with ?live=<ngrok url>, which connects straight away.
+// The notebook prints a link with ?live=<tunnel url>, which connects straight away.
 const liveParam = new URLSearchParams(location.search).get('live');
 loadFrames().then(() => {
   if (!liveParam) return;
