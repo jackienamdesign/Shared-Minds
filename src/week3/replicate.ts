@@ -10,10 +10,11 @@
 const PROXY_URL = 'https://itp-ima-replicate-proxy.web.app/api/create_n_get';
 
 /**
- * Flip this to 'google/nano-banana' if v2 gives trouble — the two take the same
- * inputs, so nothing else in this file needs to change.
+ * v1, not v2: through the proxy v1 answers in about half the time (~7s vs ~14s
+ * for a text-only test on 2026-11-17). The two take the same inputs, so switch
+ * back to 'google/nano-banana-2' here if you prefer its look.
  */
-const MODEL = 'google/nano-banana-2';
+const MODEL = 'google/nano-banana';
 
 /**
  * Almost all of the tuning happens right here. If Pingu's pose doesn't match, or

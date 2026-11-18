@@ -1,7 +1,8 @@
 /**
  * Firebase Modular SDK v10+ Initialization
  *
- * Reads config from Vite environment variables (defined in .env).
+ * Uses the site's shared Firebase config (src/firebase-config.ts). Any value
+ * set in .env overrides it, e.g. to point at a different project.
  * Supports connecting to Firebase Emulator Suite when VITE_USE_FIREBASE_EMULATOR is true.
  */
 
@@ -9,28 +10,20 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
+import { firebaseConfig as sharedConfig } from '../../src/firebase-config';
+
+// .env is gitignored, so the GitHub Pages build has none of these. It used to
+// inline `undefined` for every value and the live board failed with
+// invalid-api-key; falling back to the shared config keeps it working there.
+const env = import.meta.env;
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: env.VITE_FIREBASE_API_KEY || sharedConfig.apiKey,
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || sharedConfig.authDomain,
+  projectId: env.VITE_FIREBASE_PROJECT_ID || sharedConfig.projectId,
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || sharedConfig.storageBucket,
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || sharedConfig.messagingSenderId,
+  appId: env.VITE_FIREBASE_APP_ID || sharedConfig.appId,
 };
-
-// .env is gitignored, so a build run anywhere without it (CI, a fresh clone)
-// inlines `undefined` for every value and every auth call fails with an opaque
-// invalid-api-key. Say so up front instead.
-const missingConfig = Object.entries(firebaseConfig)
-  .filter(([, value]) => !value)
-  .map(([key]) => key);
-
-if (missingConfig.length > 0) {
-  console.error(
-    `[Prayer Board] Missing Firebase config: ${missingConfig.join(', ')}. ` +
-      'Copy .env.example to .env, fill in the values from the Firebase console, then restart the dev server.'
-  );
-}
 
 // Initialize Firebase Core
 export const app = initializeApp(firebaseConfig);
