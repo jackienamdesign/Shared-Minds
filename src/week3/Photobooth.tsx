@@ -169,7 +169,12 @@ export default function App() {
       // The webcam capture stays in this browser. Only a finished Pingu is
       // shared to the strip, and only once it exists — a failed generation
       // shares nothing.
+      //
+      // The Pingu is fetched before the polaroid counts as done. The model can
+      // succeed while its image host is unreachable (some networks block
+      // replicate.delivery), and that must read as a failure, not a broken image.
       generatePingu(dataUrl)
+        .then(toCompactDataUrl)
         .then(async (pinguUrl) => {
           updateById({ pinguUrl, status: 'done' });
           fileAwayShortly();
@@ -177,7 +182,7 @@ export default function App() {
           // Sharing failing must not turn this polaroid into a failure — the
           // visitor already has their Pingu.
           try {
-            const docId = await savePhotoToFirestore({ pinguUrl: await toCompactDataUrl(pinguUrl) });
+            const docId = await savePhotoToFirestore({ pinguUrl });
             if (docId) updateById({ firebaseDocId: docId });
           } catch (err: unknown) {
             console.error('Sharing the Pingu failed:', err);
