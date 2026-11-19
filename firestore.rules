@@ -202,29 +202,22 @@ service cloud.firestore {
     // ------------------------------------------------------------------
     // photos/{photoId} — Week 3 photobooth's shared strip
     //
-    // The photobooth has no sign-in, so anyone may read the strip and add a
-    // photo. After that, only the fields the booth fills in as a photo
-    // develops (the stored photo URL, the generated image URL, the status)
-    // may change. Nothing is ever deleted from the client.
+    // The photobooth has no sign-in, so anyone may read the strip and add to
+    // it. What they add is only ever a finished Pingu, stored as a JPEG data
+    // URL — the visitor's real webcam capture is never written here. A photo
+    // is complete when created, so nothing may change or delete it afterwards.
     // ------------------------------------------------------------------
     match /photos/{photoId} {
       allow read: if true;
 
-      allow create: if request.resource.data.keys().hasOnly(['photoUrl', 'status', 'createdAt'])
-        && request.resource.data.photoUrl is string
-        && request.resource.data.photoUrl.size() < 900000
-        && request.resource.data.status == 'developing'
+      allow create: if request.resource.data.keys().hasOnly(['pinguUrl', 'status', 'createdAt'])
+        && request.resource.data.pinguUrl is string
+        && request.resource.data.pinguUrl.matches('data:image/jpeg;base64,[A-Za-z0-9+/=]+')
+        && request.resource.data.pinguUrl.size() < 900000
+        && request.resource.data.status == 'done'
         && request.resource.data.createdAt == request.time;
 
-      allow update: if request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['photoUrl', 'pinguUrl', 'status'])
-        && request.resource.data.status in ['developing', 'done', 'failed']
-        && request.resource.data.photoUrl is string
-        && request.resource.data.photoUrl.size() < 900000
-        && (!('pinguUrl' in request.resource.data)
-            || (request.resource.data.pinguUrl is string
-                && request.resource.data.pinguUrl.size() < 4096));
-
+      allow update: if false;
       allow delete: if false;
     }
   }

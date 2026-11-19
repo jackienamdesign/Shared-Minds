@@ -73,6 +73,27 @@ export async function generatePingu(imageDataUrl: string): Promise<string> {
 }
 
 /**
+ * Fetches the generated Pingu and re-encodes it as a small JPEG data URL, so it
+ * can be stored in Firestore directly.
+ *
+ * The model's URL stops working within the hour, so it can't be what the shared
+ * strip keeps. 640px at 0.85 lands well under the 900 KB the rules allow.
+ */
+export async function toCompactDataUrl(url: string, maxSize = 640): Promise<string> {
+  const response = await fetch(url);
+  const bitmap = await createImageBitmap(await response.blob());
+
+  const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+
+  return canvas.toDataURL('image/jpeg', 0.85);
+}
+
+/**
  * Saves an image to the user's computer.
  *
  * A plain <a download> quietly ignores the download attribute when the file

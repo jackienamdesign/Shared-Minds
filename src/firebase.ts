@@ -3,22 +3,12 @@ import {
   getFirestore, 
   collection, 
   addDoc, 
-  updateDoc, 
-  doc, 
   query, 
   orderBy, 
   limit, 
   onSnapshot,
   serverTimestamp 
 } from 'firebase/firestore';
-import { 
-  getStorage, 
-  ref, 
-  uploadString, 
-  uploadBytes, 
-  getDownloadURL 
-} from 'firebase/storage';
-
 import { getAuth } from 'firebase/auth';
 
 import { firebaseConfig } from './firebase-config';
@@ -27,54 +17,29 @@ import { firebaseConfig } from './firebase-config';
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);
 
+/**
+ * One finished Pingu on the shared strip.
+ *
+ * Only the generated Pingu is shared — the visitor's webcam capture never
+ * leaves their browser. pinguUrl is the image itself as a JPEG data URL,
+ * because the model's own URL expires within the hour and the project has no
+ * Storage bucket to copy it into.
+ */
 export interface StoredPhoto {
   id?: string;
-  photoUrl: string;
-  pinguUrl?: string;
-  status: 'developing' | 'done' | 'failed';
+  pinguUrl: string;
   createdAt?: any;
 }
 
 /**
- * Uploads a base64 data URL to Firebase Cloud Storage and returns the public download URL.
- * Falls back to returning the original dataUrl if Storage upload fails (e.g., storage rules).
- */
-export async function uploadPhotoToStorage(dataUrl: string, filename: string): Promise<string> {
-  try {
-    const storageRef = ref(storage, `pingu_photos/${filename}`);
-    await uploadString(storageRef, dataUrl, 'data_url');
-    return await getDownloadURL(storageRef);
-  } catch (error) {
-    console.warn('Firebase Storage upload failed (falling back to data URL):', error);
-    return dataUrl;
-  }
-}
-
-/**
- * Uploads an external image URL to Firebase Storage for persistent archival.
- */
-export async function uploadExternalImageToStorage(imageUrl: string, filename: string): Promise<string> {
-  try {
-    const response = await fetch(imageUrl);
-    const blob = await response.blob();
-    const storageRef = ref(storage, `pingu_photos/${filename}`);
-    await uploadBytes(storageRef, blob);
-    return await getDownloadURL(storageRef);
-  } catch (error) {
-    console.warn('Failed to upload external Pingu image to Storage (using direct URL):', error);
-    return imageUrl;
-  }
-}
-
-/**
- * Saves a new photo entry to Firestore collection 'photos'.
+ * Saves a finished Pingu to Firestore collection 'photos'.
  */
 export async function savePhotoToFirestore(photo: Omit<StoredPhoto, 'id' | 'createdAt'>): Promise<string | null> {
   try {
     const docRef = await addDoc(collection(db, 'photos'), {
-      ...photo,
+      pinguUrl: photo.pinguUrl,
+      status: 'done',
       createdAt: serverTimestamp(),
     });
     return docRef.id;
@@ -85,28 +50,17 @@ export async function savePhotoToFirestore(photo: Omit<StoredPhoto, 'id' | 'crea
 }
 
 /**
- * Updates an existing photo entry in Firestore.
- */
-export async function updatePhotoInFirestore(docId: string, changes: Partial<StoredPhoto>): Promise<void> {
-  try {
-    const docRef = doc(db, 'photos', docId);
-    await updateDoc(docRef, changes);
-  } catch (error) {
-    console.error(`Failed to update photo ${docId} in Firestore:`, error);
-  }
-}
-
-/**
  * Subscribes to real-time updates of photos taken by everyone.
  */
 export function subscribeToSavedPhotos(callback: (photos: StoredPhoto[]) => void) {
   try {
     const q = query(collection(db, 'photos'), orderBy('createdAt', 'desc'), limit(50));
     return onSnapshot(q, (snapshot) => {
-      const photos: StoredPhoto[] = snapshot.docs.map((d) => ({
-        id: d.id,
-        ...(d.data() as Omit<StoredPhoto, 'id'>),
-      }));
+      // Entries from before the booth stopped sharing webcam captures may have
+      // no Pingu, only the raw photo. Those are left out of the strip.
+      const photos: StoredPhoto[] = snapshot.docs
+        .map((d) => ({ id: d.id, ...(d.data() as Omit<StoredPhoto, 'id'>) }))
+        .filter((p) => typeof p.pinguUrl === 'string' && p.pinguUrl.length > 0);
       callback(photos);
     }, (error) => {
       console.warn('Firestore subscription notice (make sure Firestore rules allow read):', error);

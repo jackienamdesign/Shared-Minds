@@ -1,14 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 
-import { generatePingu, downloadImage } from './replicate';
-import {
-  savePhotoToFirestore,
-  updatePhotoInFirestore,
-  uploadPhotoToStorage,
-  uploadExternalImageToStorage,
-  subscribeToSavedPhotos,
-  StoredPhoto,
-} from '../firebase';
+import { generatePingu, downloadImage, toCompactDataUrl } from './replicate';
+import { savePhotoToFirestore, subscribeToSavedPhotos, StoredPhoto } from '../firebase';
 import './photobooth.css';
 
 // BASE_URL carries the GitHub Pages subpath in production and "/" in dev, so
@@ -173,51 +166,27 @@ export default function App() {
       const fileAwayShortly = () =>
         setTimeout(() => updateById({ filed: true }), HOLD_BEFORE_FILING_MS);
 
-      // Async Firestore & Storage persistence with optimized payload
-      let docIdPromise = savePhotoToFirestore({
-        photoUrl: dataUrl,
-        status: 'developing',
-      });
-
-      docIdPromise.then(async (docId) => {
-        if (docId) {
-          updateById({ firebaseDocId: docId });
-          // Upload webcam capture to Firebase Storage in background
-          const storageUrl = await uploadPhotoToStorage(dataUrl, `photo-${Date.now()}-${id}.jpg`);
-          if (storageUrl && storageUrl !== dataUrl) {
-            updatePhotoInFirestore(docId, { photoUrl: storageUrl });
-          }
-        }
-      });
-
+      // The webcam capture stays in this browser. Only a finished Pingu is
+      // shared to the strip, and only once it exists — a failed generation
+      // shares nothing.
       generatePingu(dataUrl)
         .then(async (pinguUrl) => {
           updateById({ pinguUrl, status: 'done' });
           fileAwayShortly();
 
-          const docId = await docIdPromise;
-          // Upload Pingu generated render to Firebase Storage for permanent archival
-          const permanentPinguUrl = await uploadExternalImageToStorage(
-            pinguUrl,
-            `pingu-${Date.now()}-${id}.png`
-          );
-
-          if (docId) {
-            updatePhotoInFirestore(docId, {
-              pinguUrl: permanentPinguUrl,
-              status: 'done',
-            });
+          // Sharing failing must not turn this polaroid into a failure — the
+          // visitor already has their Pingu.
+          try {
+            const docId = await savePhotoToFirestore({ pinguUrl: await toCompactDataUrl(pinguUrl) });
+            if (docId) updateById({ firebaseDocId: docId });
+          } catch (err: unknown) {
+            console.error('Sharing the Pingu failed:', err);
           }
         })
-        .catch(async (err: unknown) => {
+        .catch((err: unknown) => {
           console.error('Pingu generation failed:', err);
           updateById({ status: 'failed' });
           fileAwayShortly();
-
-          const docId = await docIdPromise;
-          if (docId) {
-            updatePhotoInFirestore(docId, { status: 'failed' });
-          }
         });
     }
   }, [countdown]);
@@ -232,9 +201,9 @@ export default function App() {
     if (!community) return null;
     return {
       id: community.id,
-      photoUrl: community.photoUrl,
+      photoUrl: community.pinguUrl,
       pinguUrl: community.pinguUrl,
-      status: community.status,
+      status: 'done' as const,
       filed: true,
     };
   })();
@@ -464,8 +433,8 @@ export default function App() {
                 }}
               >
                 <img
-                  src={cp.pinguUrl ?? cp.photoUrl}
-                  alt={cp.pinguUrl ? 'You as Pingu' : 'Saved photo'}
+                  src={cp.pinguUrl}
+                  alt="Someone as Pingu"
                   style={{
                     height: 62, width: 62, objectFit: 'cover', display: 'block',
                     border: '2px solid rgba(255,255,255,0.7)',
